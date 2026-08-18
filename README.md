@@ -56,6 +56,7 @@ At the top, the $\Psi_0$ model consists of two end-to-end trained components: a 
   - [Ψ₀ with SONIC](#psi0-sonic)
 - [Baselines](#baselines)
   - [GR00T N1.6](#groot-n16)
+  - [PI-R2](#pi-r2)
   - [OpenPi π0.5](#openpi-05)
   - [InternVLA-M1](#internvla-m1)
   - [H-RDT](#h-rdt)
@@ -367,6 +368,24 @@ cd src/gr00t
 ./scripts/openloop_eval.sh
 ```
 
+<a id="pi-r2"></a>
+
+### PI-R2
+
+[πR²: Reactive Real-time Flow Policies](https://arxiv.org/abs/2607.26055) on the
+GR00T-N1.7 flow-matching action head, vendored in [`src/pir2`](src/pir2). Trains the
+three released variants (`pir2`, `rtc`, `plain_flow`) and serves them over the same
+`/act` protocol as $\Psi_0$:
+
+```bash
+bash baselines/pir2/train_pir2_simple.sh $task pir2
+
+uv run --active --group pir2 --group serve serve_pir2 \
+  --run-dir=$run_dir --ckpt-step=$ckpt_step --action-exec-horizon=24 --rtc
+```
+
+See dedicated doc here [baselines/pir2](baselines/pir2/README.md).
+
 <a id="openpi-05"></a>
 
 ### OpenPI $\pi_{0.5}$
@@ -478,6 +497,30 @@ uv run --active --group psi --group serve serve_psi0 \
   --action-exec-horizon=24 \
   --rtc
 ```
+
+#### Serve Psi-R2 (inference integration)
+
+Psi-R2 preserves the Psi0 backbone and the same `/act` protocol while adding
+PI-R2's per-position rolling flow sampler and cached slow-VLM/fresh-state fast
+channels. It lives separately under [`src/psi_r2`](src/psi_r2/README.md); the
+original `src/psi` implementation and `serve_psi0` command remain unchanged.
+
+```bash
+export run_dir=<the Psi-R2 run dir here under folder .runs>
+export ckpt_step=40000
+uv run --active --group psi-r2 --group serve serve_psi_r2 \
+  --host 0.0.0.0 \
+  --port 9000 \
+  --run-dir=$run_dir \
+  --ckpt-step=$ckpt_step \
+  --action-exec-horizon=24 \
+  --rtc
+```
+
+The current integration is inference-only. See the dedicated README for schedule,
+horizon, checkpoint-compatibility, and finetuning caveats. A self-contained
+[visual architecture comparison](docs/psi_r2_architecture.html) shows original
+Psi0, original PI-R2, and the integrated policy side by side.
 
 Run open-loop evaluation (offline)
 

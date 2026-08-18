@@ -1,0 +1,2 @@
+recorded_at,title,n_requests,vlm_forward_ms,action_expert_ms,action_expert_per_step_ms,vlm_preprocess_ms,unmeasured_ms,server_total_ms,client_loop_gap_ms,source
+2026-08-10 16:00:00,baseline · ckpt40000 · Ta24 · 10 denoise steps,97,37.0,53.62,5.36,5.5,4.63,100.76,5632.27,ckpt40000_Ta24_rtc_20260810-160026.jsonl

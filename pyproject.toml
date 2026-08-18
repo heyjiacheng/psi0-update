@@ -36,11 +36,20 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 psi = ["assets/*"]
+psi_r2 = ["NOTICE", "README.md"]
 
 [tool.uv.sources]
 psi = { path = ".", editable = true }
 #simple = { path = "third_party/SIMPLE", editable = true }
 #nvidia-curobo = { path = "third_party/SIMPLE/third_party/curobo", editable = true }
+# CUDA 12.8 wheels include Blackwell (sm_120) kernels, required for RTX 50-series GPUs.
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 [tool.uv.workspace]
 members = ["packages/*"]
@@ -75,6 +84,44 @@ psi = [
     "lerobot @ git+https://github.com/songlin/lerobot.git@09929d8057b044b53aecaf5c6d7eb71f99e8beb9"
 ]
 
+# Psi0 backbone with PI-R2's per-position rolling inference and decoupled
+# slow (Qwen image/language) / fast (fresh-state action expert) channels.
+psi-r2 = [
+    { include-group = "psi" },
+    "diffusers==0.35.1",
+]
+
+# PI-R2 (GR00T-N1.7 + πR² reactive flow head), vendored in src/pir2.
+# torch / torchvision / torchcodec / transformers are held at the same versions as
+# the `psi` group so both groups still resolve into one lockfile. The pins upstream
+# pi-r2-flow actually ships with live in baselines/pir2/requirements-pir2.txt, for a
+# dedicated .venv-pir2 that reproduces the paper environment exactly.
+pir2 = [
+    "setuptools>=61",
+    "torch==2.7.0",
+    "torchvision==0.22.0",
+    "torchcodec==0.4.0",
+    "transformers==4.57.0",
+    "accelerate==1.7.0",
+    "deepspeed==0.17.1",
+    "triton==3.3.0",
+    "peft==0.17.1",
+    # flash-attn is optional: qwen3_backbone falls back to sdpa when it is absent.
+    # "flash_attn==2.7.4.post1",
+    "av>=15.0.0",
+    "diffusers==0.35.1",
+    "gymnasium==1.2.2",
+    "huggingface-hub[cli]",
+    "lmdb==1.7.5",
+    "matplotlib==3.10.1",
+    "msgpack==1.1.0",
+    "msgpack-numpy==0.4.8",
+    "pandas==2.2.3",
+    "pyzmq==27.0.1",
+    "scipy==1.15.3",
+    "termcolor==3.2.0",
+]
+
 #simple = [
 #   "simple[full]",
 #   "nvidia-curobo[isaacsim]",
@@ -85,3 +132,5 @@ flash-attn = [{ requirement = "torch", match-runtime = true }]
 
 [project.scripts]
 serve_psi0 = "psi.deploy.psi0_serve_simple:main"
+serve_psi_r2 = "psi_r2.deploy.psi_r2_serve_simple:main"
+serve_pir2 = "pir2.deploy.pir2_serve_simple:main"

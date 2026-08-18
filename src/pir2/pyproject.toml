@@ -1,0 +1,76 @@
+# Standalone install of the vendored PI-R2 (GR00T-N1.7 + πR²) code.
+# Mirrors src/gr00t/pyproject.toml: the package is also importable straight from
+# `src/` in the shared Psi0 environments, this file only exists so the baseline
+# can be installed on its own (`uv pip install -e src/pir2`).
+
+[build-system]
+requires = ["setuptools>=67", "wheel", "pip"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pir2"
+version = "0.1.0"
+description = "PI-R2: reactive real-time flow policies on the GR00T-N1.7 action head"
+requires-python = "==3.10.*"
+# Mirrors learning/Isaac-GR00T/pyproject.toml from pi-r2-flow, minus the Jetson /
+# TensorRT extras that Psi0 never deploys to.
+dependencies = [
+    "albumentations==1.4.18",
+    "av==16.1.0",
+    "click==8.1.8",
+    "datasets==3.6.0",
+    "deepspeed==0.17.6",
+    "diffusers==0.35.1",
+    "dm-tree",
+    "einops==0.8.1",
+    "flash-attn==2.7.4.post1",
+    "gymnasium==1.2.2",
+    "huggingface-hub[cli]",
+    "jsonlines==4.0.0",
+    "lmdb==1.7.5",
+    "matplotlib==3.10.1",
+    "msgpack==1.1.0",
+    "msgpack-numpy==0.4.8",
+    "numpy==1.26.4",
+    "omegaconf==2.3.0",
+    "opencv-python-headless>=4.5,<4.13",
+    "pandas==2.2.3",
+    "peft==0.17.1",
+    "pyzmq==27.0.1",
+    "scipy==1.15.3",
+    "termcolor==3.2.0",
+    "torch==2.7.1",
+    "torchcodec==0.4.0",
+    "torchvision==0.22.1",
+    "transformers==4.57.3",
+    "tyro==0.9.17",
+    "wandb==0.23.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipython",
+    "ruff",
+]
+
+[project.scripts]
+serve_pir2 = "pir2.deploy.pir2_serve_simple:main"
+
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["pir2*"]
+
+[tool.uv.extra-build-dependencies]
+flash-attn = ["torch==2.7.1", "numpy==1.26.4"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["__pycache__", ".git", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]

@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Psi-R2 architecture — visual comparison</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #eff7ff;
+      --muted: #93a9bd;
+      --bg: #06101c;
+      --panel: #0b1928;
+      --panel-2: #0f2133;
+      --line: #294258;
+      --psi: #68d5ff;
+      --psi-soft: rgba(104, 213, 255, .13);
+      --r2: #f4b860;
+      --r2-soft: rgba(244, 184, 96, .13);
+      --new: #9fe870;
+      --new-soft: rgba(159, 232, 112, .12);
+      --violet: #b7a4ff;
+      --danger: #ff8f8f;
+      --radius: 18px;
+      --shadow: 0 22px 65px rgba(0, 0, 0, .28);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 5%, rgba(104, 213, 255, .10), transparent 27rem),
+        radial-gradient(circle at 90% 12%, rgba(244, 184, 96, .09), transparent 28rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: var(--psi); }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+
+    .page {
+      width: min(1440px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 48px 0 72px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(28px, 5vw, 64px);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(15, 33, 51, .96), rgba(8, 21, 34, .96));
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "Ψ";
+      position: absolute;
+      right: clamp(-22px, 2vw, 34px);
+      top: -90px;
+      color: rgba(104, 213, 255, .055);
+      font: 700 clamp(240px, 30vw, 470px)/1 Georgia, serif;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--new);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 920px;
+      margin-bottom: 16px;
+      font-size: clamp(40px, 7vw, 88px);
+      line-height: .98;
+      letter-spacing: -.055em;
+    }
+
+    h1 .arrow { color: var(--muted); font-weight: 400; }
+    h1 .accent { color: var(--new); }
+
+    .lede {
+      max-width: 850px;
+      margin-bottom: 26px;
+      color: #bed0df;
+      font-size: clamp(17px, 2vw, 22px);
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 9px; }
+
+    .chip, .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .03);
+      color: #c9d8e4;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .035em;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .psi-color { color: var(--psi); }
+    .r2-color { color: var(--r2); }
+    .new-color { color: var(--new); }
+
+    .invariant {
+      display: grid;
+      grid-template-columns: minmax(180px, .7fr) 2fr;
+      gap: 22px;
+      align-items: center;
+      margin-top: 28px;
+      padding: 22px;
+      border: 1px solid rgba(104, 213, 255, .35);
+      border-radius: var(--radius);
+      background: linear-gradient(110deg, rgba(104, 213, 255, .13), rgba(159, 232, 112, .06));
+    }
+
+    .big-number {
+      color: var(--psi);
+      font-size: clamp(64px, 10vw, 118px);
+      font-weight: 850;
+      line-height: .75;
+      letter-spacing: -.07em;
+    }
+
+    .big-number small {
+      display: block;
+      margin-top: 14px;
+      color: #c9d9e6;
+      font-size: 12px;
+      line-height: 1.2;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .invariant h2 { margin-bottom: 5px; font-size: clamp(22px, 3vw, 34px); }
+    .invariant p { margin: 0; color: #b6c9d8; }
+
+    .section { margin-top: 68px; }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    .section-heading h2 {
+      margin-bottom: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -.035em;
+    }
+
+    .section-heading p { max-width: 620px; margin: 0; color: var(--muted); }
+
+    .three-up {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .arch-card {
+      min-width: 0;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(160deg, var(--panel-2), var(--panel));
+      box-shadow: 0 12px 38px rgba(0, 0, 0, .18);
+    }
+
+    .arch-card.psi { border-top: 4px solid var(--psi); }
+    .arch-card.pir2 { border-top: 4px solid var(--r2); }
+    .arch-card.psir2 { border-top: 4px solid var(--new); }
+
+    .card-kicker {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .arch-card h3 { margin-bottom: 5px; font-size: 26px; }
+    .card-summary { min-height: 52px; color: #a9bdcc; font-size: 14px; }
+
+    .mini-flow {
+      display: grid;
+      gap: 8px;
+      margin: 20px 0;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(2, 10, 18, .38);
+    }
+
+    .node {
+      padding: 10px 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #10263a;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .node.psi-node { border-color: rgba(104, 213, 255, .42); background: var(--psi-soft); }
+    .node.r2-node { border-color: rgba(244, 184, 96, .42); background: var(--r2-soft); }
+    .node.new-node { border-color: rgba(159, 232, 112, .42); background: var(--new-soft); }
+    .node.muted-node { color: #9fb0bd; border-style: dashed; }
+
+    .down-arrow { color: var(--muted); text-align: center; font-size: 17px; line-height: .6; }
+
+    .lane-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .facts { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .facts li { display: grid; grid-template-columns: 94px 1fr; gap: 8px; font-size: 12px; }
+    .facts strong { color: #d9e7f1; }
+    .facts span { color: var(--muted); }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    th, td { padding: 15px 18px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); background: rgba(255, 255, 255, .025); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+    td { color: #b8cad8; font-size: 13px; }
+    td:first-child { width: 145px; color: #e4eef5; font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .yes { color: var(--new); font-weight: 800; }
+    .same { color: var(--psi); font-weight: 800; }
+    .different { color: var(--r2); font-weight: 800; }
+
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .schedule {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    .schedule h3 { margin-bottom: 4px; font-size: 18px; }
+    .schedule p { min-height: 42px; color: var(--muted); font-size: 12px; }
+
+    .bar {
+      height: 48px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 10px;
+      box-shadow: inset 0 0 25px rgba(0, 0, 0, .22);
+    }
+
+    .scalar-bar { background: linear-gradient(90deg, #547fa0, #547fa0); }
+    .tau-bar { background: linear-gradient(90deg, #56cf90 0 20%, #56cf90 20%, #f4b860 80%, #7b68b5 80% 100%); }
+    .sigma-bar { background: linear-gradient(90deg, #56cf90 0 20%, #56cf90 20%, #f4b860 80%, #7b68b5 80% 100%); }
+
+    .axis { display: flex; justify-content: space-between; margin-top: 7px; color: #90a6b8; font: 11px/1.3 "SFMono-Regular", Consolas, monospace; }
+
+    .formula {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-top: 16px;
+      padding: 20px;
+      border: 1px solid rgba(183, 164, 255, .32);
+      border-radius: var(--radius);
+      background: rgba(183, 164, 255, .07);
+      text-align: center;
+    }
+
+    .formula code { color: #ddd5ff; font-size: clamp(14px, 2vw, 20px); }
+    .formula .map-arrow { color: var(--violet); font-size: 25px; }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      counter-reset: step;
+    }
+
+    .step {
+      position: relative;
+      min-height: 164px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      counter-increment: step;
+    }
+
+    .step::before {
+      content: counter(step, decimal-leading-zero);
+      display: block;
+      margin-bottom: 24px;
+      color: var(--new);
+      font: 800 12px/1 "SFMono-Regular", Consolas, monospace;
+    }
+
+    .step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      z-index: 2;
+      right: -21px;
+      top: 70px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--bg);
+    }
+
+    .step h3 { margin-bottom: 7px; font-size: 16px; }
+    .step p { margin: 0; color: var(--muted); font-size: 12px; }
+    .step.ten { border-color: rgba(104, 213, 255, .44); background: var(--psi-soft); }
+
+    .dual-lane {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 12px 18px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    .lane-name {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .lane-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: center; }
+    .lane-flow .node { position: relative; }
+    .lane-flow .node:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -16px;
+      top: 50%;
+      color: var(--muted);
+      transform: translateY(-50%);
+    }
+
+    .nfe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+    .nfe-card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    .nfe-card .value { margin-bottom: 10px; color: var(--psi); font-size: 44px; font-weight: 850; line-height: 1; letter-spacing: -.05em; }
+    .nfe-card.r2-eval .value { color: var(--r2); }
+    .nfe-card h3 { margin-bottom: 5px; font-size: 15px; }
+    .nfe-card p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .callout {
+      margin-top: 14px;
+      padding: 15px 18px;
+      border-left: 4px solid var(--new);
+      border-radius: 0 12px 12px 0;
+      background: var(--new-soft);
+      color: #c9dcc0;
+      font-size: 13px;
+    }
+
+    .delta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .delta { padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+    .delta h3 { display: flex; align-items: center; gap: 9px; margin-bottom: 13px; font-size: 17px; }
+    .delta ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+    .delta li + li { margin-top: 7px; }
+
+    .source-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+    .button {
+      display: inline-flex;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .035);
+      color: #cfe0ec;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .button:hover { border-color: var(--psi); background: var(--psi-soft); }
+
+    footer { margin-top: 62px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 1050px) {
+      .three-up, .schedule-grid { grid-template-columns: 1fr; }
+      .card-summary, .schedule p { min-height: 0; }
+      .timeline { grid-template-columns: 1fr 1fr; }
+      .step:not(:last-child)::after { display: none; }
+      .nfe-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .page { width: min(100% - 22px, 1440px); padding-top: 14px; }
+      .hero { border-radius: 20px; }
+      .invariant, .formula { grid-template-columns: 1fr; }
+      .section-heading { display: block; }
+      .section-heading p { margin-top: 8px; }
+      .timeline, .nfe-grid, .delta-grid { grid-template-columns: 1fr; }
+      .dual-lane { grid-template-columns: 1fr; }
+      .lane-flow { grid-template-columns: 1fr; }
+      .lane-flow .node:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -18px; transform: translateX(50%); }
+    }
+
+    @media print {
+      :root { color-scheme: light; --ink: #102030; --muted: #506274; --bg: #fff; --panel: #f6f9fb; --panel-2: #edf4f7; --line: #c8d5df; }
+      body { background: #fff; }
+      .page { width: 100%; padding: 0; }
+      .hero, .arch-card, .schedule, .step, .dual-lane, .nfe-card, .delta { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">Inference architecture delta · 18 August 2026</p>
+      <h1>Ψ₀ <span class="arrow">→</span> <span class="accent">Ψ-R²</span></h1>
+      <p class="lede">
+        Keep the learned Psi0 backbone and its original 10-step full-flow denoiser;
+        add PI-R2’s cached slow vision lane, fresh-state fast lane, and rolling
+        per-position sampler as inference-only runtime state.
+      </p>
+      <div class="chips" aria-label="Design constraints">
+        <span class="chip psi-color"><span class="dot"></span>same Psi weights</span>
+        <span class="chip psi-color"><span class="dot"></span>10-step full flow retained</span>
+        <span class="chip new-color"><span class="dot"></span>no new checkpoint keys</span>
+        <span class="chip r2-color"><span class="dot"></span>PI-R2 rolling runtime</span>
+        <span class="chip"><span class="dot"></span>inference only</span>
+      </div>
+
+      <div class="invariant">
+        <div class="big-number">10<small>Psi0 full-flow evaluations</small></div>
+        <div>
+          <h2>The original denoise count stays intact.</h2>
+          <p>
+            Plain Psi-R2 inference and every reset warm-start call the unchanged Psi0
+            FlowMatch scheduler for ten steps. The rolling fast path has its own
+            <code>fast_substeps=1</code> default because it is a PI-R2 update—not a
+            replacement definition of Psi0’s full-flow sampler.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <section class="section" aria-labelledby="architecture-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Side-by-side</p>
+          <h2 id="architecture-title">Three architectures, one integration boundary</h2>
+        </div>
+        <p>
+          Original PI-R2 contributes the runtime pattern and schedule. It does not
+          replace Psi0’s learned Qwen3-VL backbone or action transformer.
+        </p>
+      </div>
+
+      <div class="three-up">
+        <article class="arch-card psi">
+          <p class="card-kicker">Baseline A · synchronous</p>
+          <h3>Original Psi0</h3>
+          <p class="card-summary">One blocking vision + action pipeline is recomputed for every request.</p>
+          <div class="mini-flow" aria-label="Original Psi0 flow">
+            <div class="node">images + instruction</div>
+            <div class="down-arrow">↓</div>
+            <div class="node psi-node">Qwen3-VL-2B</div>
+            <div class="down-arrow">↓</div>
+            <div class="node">VLM hidden + fresh state + noisy actions</div>
+            <div class="down-arrow">↓</div>
+            <div class="node psi-node">Psi ActionTransformer × 10 scalar-σ steps</div>
+            <div class="down-arrow">↓</div>
+            <div class="node">clean chunk Tp=30 → serve Ta=24</div>
+          </div>
+          <ul class="facts">
+            <li><strong>Weights</strong><span>Psi Qwen + Psi action head</span></li>
+            <li><strong>Time</strong><span>one scalar σ shared by all positions</span></li>
+            <li><strong>Vision</strong><span>fresh and blocking every request</span></li>
+            <li><strong>Sampler</strong><span>stateless full-flow, 10 evaluations</span></li>
+          </ul>
+        </article>
+
+        <article class="arch-card pir2">
+          <p class="card-kicker">Baseline B · reference method</p>
+          <h3>Original PI-R2</h3>
+          <p class="card-summary">GR00T’s learned stack is split into a cached VLM lane and a reactive action lane.</p>
+          <div class="mini-flow" aria-label="Original PI-R2 flow">
+            <p class="lane-label r2-color"><span class="dot"></span>slow lane</p>
+            <div class="node r2-node">images + language → GR00T VLM → cached VL</div>
+            <p class="lane-label r2-color"><span class="dot"></span>fast lane</p>
+            <div class="node">fresh state + rolling actions + per-position τ</div>
+            <div class="down-arrow">↓</div>
+            <div class="node r2-node">GR00T state/action encoders + VL-DiT</div>
+            <div class="down-arrow">↓</div>
+            <div class="node">emit [d:2d] → slide d → append noise</div>
+          </div>
+          <ul class="facts">
+            <li><strong>Weights</strong><span>GR00T action stack, not Psi</span></li>
+            <li><strong>Time</strong><span>per-position τ; 0=noise, s=clean</span></li>
+            <li><strong>Vision</strong><span>cached slow channel</span></li>
+            <li><strong>Sampler</strong><span>stateful rolling buffer; fast default 1 eval</span></li>
+          </ul>
+        </article>
+
+        <article class="arch-card psir2">
+          <p class="card-kicker">Integrated policy · inference only</p>
+          <h3>Psi-R2</h3>
+          <p class="card-summary">PI-R2 runtime semantics around the strictly compatible Psi0 model.</p>
+          <div class="mini-flow" aria-label="Psi-R2 flow">
+            <p class="lane-label new-color"><span class="dot"></span>slow lane</p>
+            <div class="node psi-node">same Qwen3-VL → cached Psi hidden states</div>
+            <p class="lane-label new-color"><span class="dot"></span>fast lane</p>
+            <div class="node">fresh state + rolling actions + per-position σ</div>
+            <div class="down-arrow">↓</div>
+            <div class="node new-node">same Psi ActionTransformer + time adapter</div>
+            <div class="down-arrow">↓</div>
+            <div class="node">emit d=6 → FIFO slide → fresh tail noise</div>
+          </div>
+          <ul class="facts">
+            <li><strong>Weights</strong><span>same 181 Psi action-head keys</span></li>
+            <li><strong>Time</strong><span>per-position σ = 1 − τ/s</span></li>
+            <li><strong>Vision</strong><span>sync reset, then async latest-wins cache</span></li>
+            <li><strong>Sampler</strong><span>10-step seed + PI-R2 rolling updates</span></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="matrix-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Comparison matrix</p>
+          <h2 id="matrix-title">What comes from where?</h2>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Aspect</th><th>Original Psi0</th><th>Original PI-R2</th><th>Psi-R2 integration</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Learned backbone</td><td>Psi Qwen3-VL-2B</td><td class="different">GR00T VLM/backbone</td><td class="same">Unchanged Psi Qwen3-VL-2B</td></tr>
+            <tr><td>Action model</td><td>Psi joint ActionTransformer</td><td class="different">GR00T encoders + VL-DiT</td><td class="same">Unchanged Psi ActionTransformer</td></tr>
+            <tr><td>Full-flow NFE</td><td class="same">10</td><td>GR00T config (released default 4)</td><td class="same">10 for plain/reset bootstrap</td></tr>
+            <tr><td>Fast-call NFE</td><td>Not split</td><td>1 rolling substep by default</td><td class="yes">1 rolling substep by default</td></tr>
+            <tr><td>Time layout</td><td>Scalar σ per batch</td><td>Tokenwise τ per action position</td><td class="yes">Tokenwise Psi σ after conversion</td></tr>
+            <tr><td>State time</td><td>Follows scalar action time</td><td>Fixed τ=0</td><td>Fixed σ=1 / timestep 1000</td></tr>
+            <tr><td>Vision cadence</td><td>Blocking every request</td><td>Cached slow channel</td><td class="yes">Cached slow channel; sync on reset</td></tr>
+            <tr><td>Action state</td><td>New full chunk each call</td><td>Rolling buffer across calls</td><td class="yes">Rolling buffer across calls</td></tr>
+            <tr><td>Serving</td><td><code>/act → Ta</code></td><td>Decoupled RPC methods</td><td><code>/act → 24</code>; <code>/fast → d=6</code></td></tr>
+            <tr><td>Training status</td><td>Trained Psi checkpoint</td><td>PI-R2 ramp/staleness training</td><td>Inference port; finetuning later</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="schedule-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Noise-time geometry</p>
+          <h2 id="schedule-title">Scalar flow becomes a position-wise ramp</h2>
+        </div>
+        <p>Example shown for <code>Tp=30</code>, execution horizon <code>Ta=24</code>, and rolling width <code>d=6</code>.</p>
+      </div>
+      <div class="schedule-grid">
+        <article class="schedule">
+          <h3>Original Psi0 · scalar σ</h3>
+          <p>Every action position shares the same denoise time during each of the ten scheduler steps.</p>
+          <div class="bar scalar-bar"></div>
+          <div class="axis"><span>p=0 · σ</span><span>same time everywhere</span><span>p=29 · σ</span></div>
+        </article>
+        <article class="schedule">
+          <h3>Original PI-R2 · per-position τ</h3>
+          <p>Clean prefix, linear middle ramp, and noisy suffix. Reference orientation: larger τ is cleaner.</p>
+          <div class="bar tau-bar"></div>
+          <div class="axis"><span>clean · τ=s</span><span>ramp</span><span>noise · τ=0</span></div>
+        </article>
+        <article class="schedule">
+          <h3>Psi-R2 · per-position σ</h3>
+          <p>The same physical schedule translated into Psi’s opposite numeric convention.</p>
+          <div class="bar sigma-bar"></div>
+          <div class="axis"><span>clean · σ=0</span><span>ramp</span><span>noise · σ=1</span></div>
+        </article>
+      </div>
+      <div class="formula" aria-label="Time conversion formula">
+        <code>PI-R2: τ=0 noise, τ=s clean</code>
+        <span class="map-arrow">⟶</span>
+        <code>Psi-R2: σ = 1 − τ/s</code>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="reset-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Episode start</p>
+          <h2 id="reset-title">Reset keeps the original 10-step Psi0 denoiser</h2>
+        </div>
+        <p>The PI-R2 rolling buffer must be warm-started from a clean, coherent chunk before reactive updates begin.</p>
+      </div>
+      <div class="timeline">
+        <article class="step"><h3>Synchronous slow encode</h3><p>Current image and instruction run through the unchanged Qwen3-VL backbone.</p></article>
+        <article class="step ten"><h3>Original full flow × 10</h3><p>Noise → clean Tp=30 chunk using Psi0’s scalar FlowMatch scheduler.</p></article>
+        <article class="step"><h3>Manifold seed</h3><p>Mix the clean chunk with fresh noise at every position’s initial σ.</p></article>
+        <article class="step"><h3>First rolling cycle</h3><p>Per-position Euler update; newly clean actions live in <code>[d:2d]</code>.</p></article>
+        <article class="step"><h3>Serve actions</h3><p><code>/fast</code> returns 6; compatibility <code>/act</code> batches four cycles and returns 24.</p></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="steady-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Steady state</p>
+          <h2 id="steady-title">Slow vision and fast control are decoupled</h2>
+        </div>
+      </div>
+      <div class="dual-lane">
+        <div class="lane-name r2-color">Slow lane</div>
+        <div class="lane-flow">
+          <div class="node">new image</div>
+          <div class="node psi-node">Qwen3-VL</div>
+          <div class="node">latest-wins worker</div>
+          <div class="node new-node">atomic feature cache</div>
+        </div>
+        <div class="lane-name new-color">Fast lane</div>
+        <div class="lane-flow">
+          <div class="node">fresh proprio</div>
+          <div class="node">cached VLM + rolling buffer</div>
+          <div class="node psi-node">Psi action head</div>
+          <div class="node new-node">d=6 actions</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="nfe-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Evaluation ledger</p>
+          <h2 id="nfe-title">How many action-head calls happen?</h2>
+        </div>
+        <p>Defaults below use <code>Tp=30</code>, <code>Ta=24</code>, <code>d=6</code>, and <code>fast_substeps=1</code>.</p>
+      </div>
+      <div class="nfe-grid">
+        <article class="nfe-card"><div class="value">10</div><h3>Original Psi0 /act</h3><p>Ten scalar-time flow evaluations on every request.</p></article>
+        <article class="nfe-card"><div class="value">10+4</div><h3>Psi-R2 reset /act</h3><p>Original ten-step warm start, then four d-wide rolling cycles for 24 actions.</p></article>
+        <article class="nfe-card r2-eval"><div class="value">4</div><h3>Psi-R2 steady /act</h3><p>Compatibility response batches four one-evaluation rolling cycles.</p></article>
+        <article class="nfe-card r2-eval"><div class="value">1</div><h3>Psi-R2 /fast</h3><p>One true PI-R2 cycle, fresh state, and six returned actions.</p></article>
+      </div>
+      <div class="callout">
+        <strong>Important:</strong> “keep Psi0 at 10 steps” applies to the unchanged
+        scalar full-flow path. Setting every PI-R2 fast cycle to ten would make a
+        legacy 24-action <code>/act</code> perform 40 rolling evaluations and erase much
+        of the reactive sampler’s latency advantage.
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="delta-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Change boundary</p>
+          <h2 id="delta-title">Unchanged, added, and intentionally deferred</h2>
+        </div>
+      </div>
+      <div class="delta-grid">
+        <article class="delta">
+          <h3 class="psi-color"><span class="dot"></span>Unchanged from Psi0</h3>
+          <ul>
+            <li>Qwen3-VL and ActionTransformer learned parameters</li>
+            <li>Strict checkpoint key and tensor shapes</li>
+            <li>Original ten-step scalar full-flow scheduler</li>
+            <li>SIMPLE transforms and <code>/act</code> response contract</li>
+            <li>Original <code>src/psi</code> implementation</li>
+          </ul>
+        </article>
+        <article class="delta">
+          <h3 class="new-color"><span class="dot"></span>Added in Psi-R2</h3>
+          <ul>
+            <li>Per-position τ→σ schedule conversion</li>
+            <li>Explicit observation/state time at σ=1</li>
+            <li>Stateful rolling action/time buffers</li>
+            <li>Cached slow VLM and fresh-state fast paths</li>
+            <li><code>/slow</code>, <code>/fast</code>, and health endpoints</li>
+          </ul>
+        </article>
+        <article class="delta">
+          <h3 class="r2-color"><span class="dot"></span>Deferred to finetuning</h3>
+          <ul>
+            <li>PI-R2 ramp-schedule training distribution</li>
+            <li>Learned image-delay embedding</li>
+            <li>Stale-vision robustness training</li>
+            <li>Dynamic d from measured control latency</li>
+            <li>Dedicated GPU stream/process performance tuning</li>
+          </ul>
+        </article>
+      </div>
+      <nav class="source-links" aria-label="Implementation links">
+        <a class="button" href="../src/psi_r2/models/psi_r2.py">Psi-R2 model</a>
+        <a class="button" href="../src/psi_r2/models/schedule.py">Rolling schedule</a>
+        <a class="button" href="../src/psi_r2/deploy/psi_r2_serve_simple.py">Server</a>
+        <a class="button" href="../src/psi_r2/README.md">Run guide</a>
+      </nav>
+    </section>
+
+    <footer>
+      Psi-R2 architecture summary · inference-only integration · self-contained HTML,
+      no external assets. Open this file directly in a browser or print it to PDF.
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,8 @@
+This product includes software modified from NVIDIA Isaac-GR00T
+(https://github.com/NVIDIA/Isaac-GR00T), licensed under the Apache License,
+Version 2.0.
+
+The `pir2` branch adds the modifications for "piR2: Reactive Real-time Flow
+Policies" (Sungjae Park and Shubham Tulsiani, 2026) on top of the pinned upstream
+commit 4b1dca9 (GR00T-N1.7 release). The complete change set is the branch diff
+(4b1dca9..pir2) and is summarized in CHANGES.md.

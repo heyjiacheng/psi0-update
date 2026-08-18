@@ -1,0 +1,428 @@
+[23:33:24 08/18] WARNING  | >> [*] CUDA_LAUNCH_BLOCKING was enabled; setting it to 0 for Psi-R2's psi_r2_serve_simple.py:689
+                          asynchronous slow/fast channels                                                                   
+                 INFO     | >> [*] Args:                                                          psi_r2_serve_simple.py:701
+                          ['/home/jc/jc_workspace/humanoid/Psi0/.venv/bin/serve_psi_r2',                                    
+                          '--host', '0.0.0.0', '--port', '9000',                                                            
+                          '--run-dir=.runs/finetune/simple/Efficient/g1wholebodyxmovepick-v0.simp                           
+                          le.flow1000.cosine.lr1.0e-04.b128.gpus8.2604022205',                                              
+                          '--ckpt-step=40000', '--action-exec-horizon=24', '--rtc']                                         
+[23:33:25 08/18] INFO     | >> [*] Loading Psi-R2 on cuda:0                                       psi_r2_serve_simple.py:235
+The new embeddings will be initialized from a multivariate normal distribution that has old embeddings' mean and covariance. As described in this article: https://nlp.stanford.edu/~johnhew/vocab-expansion.html. To disable this, use `mean_resizing=False`
+[23:34:10 08/18] INFO     | >> [*] Resized model token embeddings to 153792                                                   psi0.py:1559
+[23:34:13 08/18] INFO     | >> [*] loaded vlm_backbone checkpoint successfully.                                               psi0.py:1562
+[23:34:14 08/18] INFO     | >> [*] Total ActionTransformerModel parameters: 497,719,256                                       psi0.py:1511
+                 INFO     | >> [*] Total VLM Backbone parameters: 2,131,333,120                                               psi0.py:1515
+[23:34:15 08/18] INFO     | >> [*] loaded action head checkpoint successfully.                                                psi0.py:1580
+[23:34:18 08/18] INFO     | >> [*] Per-request inference timings ->                                             psi_r2_serve_simple.py:296
+                          .runs/finetune/simple/Efficient/g1wholebodyxmovepick-v0.simple.flow1000.cosine.lr1.0e                           
+                          -04.b128.gpus8.2604022205/inference_timing/ckpt40000_Ta24_rtc_20260818-233418.jsonl                             
+                 INFO     | >> [*] Parameters (millions): 2629.052                                              psi_r2_serve_simple.py:299
+                 INFO     | >> [*] PI-R2 enabled: Tp=30, Ta=24, d=6, fast_updates_per_response=4, substeps=1    psi_r2_serve_simple.py:301
+                 INFO     | >> [*] Psi-R2 server listens on 0.0.0.0:9000                                        psi_r2_serve_simple.py:665
+INFO:     Started server process [885290]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:9000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:55692 - "GET /info HTTP/1.1" 404 Not Found
+[23:35:36 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | bootstrap+stream | slow=bootstrap-sync |            psi_r2_serve_simple.py:547
+                          cache_age=0.0ms                                                                                                 
+                 INFO     | >> [*]  ep1 #1 client_loop_gap_ms=130901.68ms  request_preprocess=   6.13ms         psi_r2_serve_simple.py:514
+                          vlm_preprocess=  23.57ms  vlm_forward= 709.06ms  slow_vlm_offpath=   0.00ms                                     
+                          action_expert= 118.47ms  action_expert_per_step=   8.46ms  cache_age_ms=   0.00ms                               
+                          response_decode=   0.05ms  server_total= 858.00ms                                                               
+INFO:     127.0.0.1:48790 - "POST /act HTTP/1.1" 200 OK
+[23:35:41 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5459.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #2 client_loop_gap_ms=4600.00ms  request_preprocess=   1.85ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath= 709.06ms                                     
+                          action_expert=  25.66ms  action_expert_per_step=   6.42ms  cache_age_ms=5459.89ms                               
+                          response_decode=   0.04ms  server_total=  28.21ms                                                               
+INFO:     127.0.0.1:48800 - "POST /act HTTP/1.1" 200 OK
+[23:35:45 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4557.1ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #3 client_loop_gap_ms=4527.22ms  request_preprocess=   1.25ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  55.35ms                                     
+                          action_expert=  25.69ms  action_expert_per_step=   6.42ms  cache_age_ms=4557.10ms                               
+                          response_decode=   0.04ms  server_total=  27.24ms                                                               
+INFO:     127.0.0.1:40044 - "POST /act HTTP/1.1" 200 OK
+[23:35:50 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4543.5ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #4 client_loop_gap_ms=4514.71ms  request_preprocess=   1.26ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  33.50ms                                     
+                          action_expert=  25.44ms  action_expert_per_step=   6.36ms  cache_age_ms=4543.55ms                               
+                          response_decode=   0.04ms  server_total=  27.00ms                                                               
+INFO:     127.0.0.1:40052 - "POST /act HTTP/1.1" 200 OK
+[23:35:54 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4619.6ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #5 client_loop_gap_ms=4590.56ms  request_preprocess=   1.41ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  43.86ms                                     
+                          action_expert=  25.53ms  action_expert_per_step=   6.38ms  cache_age_ms=4619.60ms                               
+                          response_decode=   0.04ms  server_total=  27.24ms                                                               
+INFO:     127.0.0.1:46154 - "POST /act HTTP/1.1" 200 OK
+[23:35:59 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4633.8ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #6 client_loop_gap_ms=4604.21ms  request_preprocess=   1.31ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  30.75ms                                     
+                          action_expert=  25.33ms  action_expert_per_step=   6.33ms  cache_age_ms=4633.84ms                               
+                          response_decode=   0.04ms  server_total=  26.95ms                                                               
+INFO:     127.0.0.1:46162 - "POST /act HTTP/1.1" 200 OK
+[23:36:04 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4702.3ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #7 client_loop_gap_ms=4673.79ms  request_preprocess=   1.25ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  45.03ms                                     
+                          action_expert=  25.46ms  action_expert_per_step=   6.36ms  cache_age_ms=4702.35ms                               
+                          response_decode=   0.04ms  server_total=  27.03ms                                                               
+INFO:     127.0.0.1:41684 - "POST /act HTTP/1.1" 200 OK
+[23:36:09 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4767.3ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #8 client_loop_gap_ms=4738.39ms  request_preprocess=   1.28ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  46.05ms                                     
+                          action_expert=  25.48ms  action_expert_per_step=   6.37ms  cache_age_ms=4767.26ms                               
+                          response_decode=   0.04ms  server_total=  27.06ms                                                               
+INFO:     127.0.0.1:41686 - "POST /act HTTP/1.1" 200 OK
+[23:36:13 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4637.5ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #9 client_loop_gap_ms=4608.61ms  request_preprocess=   1.35ms           psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.74ms                                     
+                          action_expert=  25.32ms  action_expert_per_step=   6.33ms  cache_age_ms=4637.48ms                               
+                          response_decode=   0.04ms  server_total=  26.99ms                                                               
+INFO:     127.0.0.1:55890 - "POST /act HTTP/1.1" 200 OK
+[23:36:18 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4622.1ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #10 client_loop_gap_ms=4593.22ms  request_preprocess=   1.27ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  45.28ms                                     
+                          action_expert=  25.51ms  action_expert_per_step=   6.38ms  cache_age_ms=4622.09ms                               
+                          response_decode=   0.04ms  server_total=  27.10ms                                                               
+INFO:     127.0.0.1:55896 - "POST /act HTTP/1.1" 200 OK
+[23:36:23 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4729.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #11 client_loop_gap_ms=4700.48ms  request_preprocess=   1.27ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.61ms                                     
+                          action_expert=  25.99ms  action_expert_per_step=   6.50ms  cache_age_ms=4729.17ms                               
+                          response_decode=   0.04ms  server_total=  27.58ms                                                               
+INFO:     127.0.0.1:37976 - "POST /act HTTP/1.1" 200 OK
+[23:36:27 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4779.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #12 client_loop_gap_ms=4749.51ms  request_preprocess=   1.26ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  40.73ms                                     
+                          action_expert=  25.44ms  action_expert_per_step=   6.36ms  cache_age_ms=4779.19ms                               
+                          response_decode=   0.05ms  server_total=  27.04ms                                                               
+INFO:     127.0.0.1:37986 - "POST /act HTTP/1.1" 200 OK
+[23:36:32 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4724.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #13 client_loop_gap_ms=4696.27ms  request_preprocess=   1.27ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  44.06ms                                     
+                          action_expert=  25.26ms  action_expert_per_step=   6.32ms  cache_age_ms=4724.90ms                               
+                          response_decode=   0.04ms  server_total=  26.84ms                                                               
+INFO:     127.0.0.1:59058 - "POST /act HTTP/1.1" 200 OK
+[23:36:37 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4687.7ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #14 client_loop_gap_ms=4659.34ms  request_preprocess=   1.37ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.45ms                                     
+                          action_expert=  25.47ms  action_expert_per_step=   6.37ms  cache_age_ms=4687.74ms                               
+                          response_decode=   0.04ms  server_total=  27.16ms                                                               
+INFO:     127.0.0.1:59066 - "POST /act HTTP/1.1" 200 OK
+[23:36:41 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4670.6ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #15 client_loop_gap_ms=4641.62ms  request_preprocess=   1.29ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  33.40ms                                     
+                          action_expert=  25.30ms  action_expert_per_step=   6.33ms  cache_age_ms=4670.64ms                               
+                          response_decode=   0.04ms  server_total=  26.91ms                                                               
+INFO:     127.0.0.1:59074 - "POST /act HTTP/1.1" 200 OK
+[23:36:46 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4707.8ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #16 client_loop_gap_ms=4679.28ms  request_preprocess=   1.29ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  46.78ms                                     
+                          action_expert=  25.47ms  action_expert_per_step=   6.37ms  cache_age_ms=4707.80ms                               
+                          response_decode=   0.04ms  server_total=  27.05ms                                                               
+INFO:     127.0.0.1:44898 - "POST /act HTTP/1.1" 200 OK
+[23:36:51 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4621.8ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #17 client_loop_gap_ms=4593.18ms  request_preprocess=   1.28ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  45.73ms                                     
+                          action_expert=  25.32ms  action_expert_per_step=   6.33ms  cache_age_ms=4621.84ms                               
+                          response_decode=   0.04ms  server_total=  26.91ms                                                               
+INFO:     127.0.0.1:44902 - "POST /act HTTP/1.1" 200 OK
+[23:36:55 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4714.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #18 client_loop_gap_ms=4685.58ms  request_preprocess=   1.31ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.69ms                                     
+                          action_expert=  25.77ms  action_expert_per_step=   6.44ms  cache_age_ms=4714.86ms                               
+                          response_decode=   0.04ms  server_total=  27.40ms                                                               
+INFO:     127.0.0.1:51474 - "POST /act HTTP/1.1" 200 OK
+[23:37:00 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4831.4ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #19 client_loop_gap_ms=4801.83ms  request_preprocess=   1.36ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.10ms                                     
+                          action_expert=  25.59ms  action_expert_per_step=   6.40ms  cache_age_ms=4831.40ms                               
+                          response_decode=   0.05ms  server_total=  27.27ms                                                               
+INFO:     127.0.0.1:51484 - "POST /act HTTP/1.1" 200 OK
+[23:37:05 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4755.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #20 client_loop_gap_ms=4726.99ms  request_preprocess=   1.27ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  46.29ms                                     
+                          action_expert=  26.01ms  action_expert_per_step=   6.50ms  cache_age_ms=4755.91ms                               
+                          response_decode=   0.04ms  server_total=  27.60ms                                                               
+INFO:     127.0.0.1:45408 - "POST /act HTTP/1.1" 200 OK
+[23:37:10 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4778.6ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #21 client_loop_gap_ms=4749.05ms  request_preprocess=   1.29ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  48.00ms                                     
+                          action_expert=  25.48ms  action_expert_per_step=   6.37ms  cache_age_ms=4778.61ms                               
+                          response_decode=   0.04ms  server_total=  27.09ms                                                               
+INFO:     127.0.0.1:45420 - "POST /act HTTP/1.1" 200 OK
+[23:37:15 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4711.8ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #22 client_loop_gap_ms=4682.81ms  request_preprocess=   1.26ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  31.66ms                                     
+                          action_expert=  25.60ms  action_expert_per_step=   6.40ms  cache_age_ms=4711.81ms                               
+                          response_decode=   0.04ms  server_total=  27.19ms                                                               
+INFO:     127.0.0.1:36956 - "POST /act HTTP/1.1" 200 OK
+[23:37:19 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4670.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #23 client_loop_gap_ms=4641.07ms  request_preprocess=   1.57ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  43.30ms                                     
+                          action_expert=  34.55ms  action_expert_per_step=   8.64ms  cache_age_ms=4670.21ms                               
+                          response_decode=   0.05ms  server_total=  36.47ms                                                               
+INFO:     127.0.0.1:36958 - "POST /act HTTP/1.1" 200 OK
+[23:37:24 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4843.7ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #24 client_loop_gap_ms=4804.72ms  request_preprocess=   1.68ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.23ms                                     
+                          action_expert=  34.99ms  action_expert_per_step=   8.75ms  cache_age_ms=4843.74ms                               
+                          response_decode=   0.05ms  server_total=  37.05ms                                                               
+INFO:     127.0.0.1:55092 - "POST /act HTTP/1.1" 200 OK
+[23:37:29 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4774.3ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #25 client_loop_gap_ms=4735.30ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.04ms                                     
+                          action_expert=  34.73ms  action_expert_per_step=   8.68ms  cache_age_ms=4774.35ms                               
+                          response_decode=   0.05ms  server_total=  36.70ms                                                               
+INFO:     127.0.0.1:55104 - "POST /act HTTP/1.1" 200 OK
+[23:37:34 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4694.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #26 client_loop_gap_ms=4654.74ms  request_preprocess=   1.64ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  33.70ms                                     
+                          action_expert=  34.88ms  action_expert_per_step=   8.72ms  cache_age_ms=4694.21ms                               
+                          response_decode=   0.05ms  server_total=  36.87ms                                                               
+INFO:     127.0.0.1:37814 - "POST /act HTTP/1.1" 200 OK
+[23:37:38 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4743.1ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #27 client_loop_gap_ms=4704.30ms  request_preprocess=   1.57ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  31.81ms                                     
+                          action_expert=  34.77ms  action_expert_per_step=   8.69ms  cache_age_ms=4743.10ms                               
+                          response_decode=   0.05ms  server_total=  36.68ms                                                               
+INFO:     127.0.0.1:37828 - "POST /act HTTP/1.1" 200 OK
+[23:37:43 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4785.5ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #28 client_loop_gap_ms=4746.90ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.32ms                                     
+                          action_expert=  34.88ms  action_expert_per_step=   8.72ms  cache_age_ms=4785.54ms                               
+                          response_decode=   0.06ms  server_total=  36.84ms                                                               
+INFO:     127.0.0.1:35422 - "POST /act HTTP/1.1" 200 OK
+[23:37:48 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4728.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #29 client_loop_gap_ms=4689.64ms  request_preprocess=   1.68ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.35ms                                     
+                          action_expert=  34.77ms  action_expert_per_step=   8.69ms  cache_age_ms=4728.93ms                               
+                          response_decode=   0.05ms  server_total=  36.80ms                                                               
+INFO:     127.0.0.1:35430 - "POST /act HTTP/1.1" 200 OK
+[23:37:53 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4740.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #30 client_loop_gap_ms=4701.77ms  request_preprocess=   1.77ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.68ms                                     
+                          action_expert=  34.79ms  action_expert_per_step=   8.70ms  cache_age_ms=4740.92ms                               
+                          response_decode=   0.05ms  server_total=  36.92ms                                                               
+INFO:     127.0.0.1:40322 - "POST /act HTTP/1.1" 200 OK
+[23:37:57 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4764.0ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #31 client_loop_gap_ms=4724.43ms  request_preprocess=   1.82ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  33.54ms                                     
+                          action_expert=  34.81ms  action_expert_per_step=   8.70ms  cache_age_ms=4763.96ms                               
+                          response_decode=   0.05ms  server_total=  36.97ms                                                               
+INFO:     127.0.0.1:40338 - "POST /act HTTP/1.1" 200 OK
+[23:38:02 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4717.8ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #32 client_loop_gap_ms=4678.96ms  request_preprocess=   1.84ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  40.99ms                                     
+                          action_expert=  34.69ms  action_expert_per_step=   8.67ms  cache_age_ms=4717.81ms                               
+                          response_decode=   0.05ms  server_total=  36.87ms                                                               
+INFO:     127.0.0.1:58820 - "POST /act HTTP/1.1" 200 OK
+[23:38:07 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4689.4ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #33 client_loop_gap_ms=4649.89ms  request_preprocess=   1.62ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  31.69ms                                     
+                          action_expert=  34.82ms  action_expert_per_step=   8.71ms  cache_age_ms=4689.36ms                               
+                          response_decode=   0.05ms  server_total=  36.82ms                                                               
+INFO:     127.0.0.1:58826 - "POST /act HTTP/1.1" 200 OK
+[23:38:12 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=4857.3ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep1 #34 client_loop_gap_ms=4818.50ms  request_preprocess=   1.62ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.90ms                                     
+                          action_expert=  34.72ms  action_expert_per_step=   8.68ms  cache_age_ms=4857.28ms                               
+                          response_decode=   0.06ms  server_total=  36.70ms                                                               
+INFO:     127.0.0.1:58842 - "POST /act HTTP/1.1" 200 OK
+[23:39:19 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | bootstrap+stream | slow=bootstrap-sync |            psi_r2_serve_simple.py:547
+                          cache_age=0.0ms                                                                                                 
+                 INFO     | >> [*]  ep2 #35 client_loop_gap_ms=67484.42ms  request_preprocess=   2.90ms         psi_r2_serve_simple.py:514
+                          vlm_preprocess=   7.85ms  vlm_forward=  29.31ms  slow_vlm_offpath=   0.00ms                                     
+                          action_expert=  76.63ms  action_expert_per_step=   5.47ms  cache_age_ms=   0.00ms                               
+                          response_decode=   0.04ms  server_total= 117.20ms                                                               
+INFO:     127.0.0.1:44636 - "POST /act HTTP/1.1" 200 OK
+[23:39:25 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5517.5ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #36 client_loop_gap_ms=5398.74ms  request_preprocess=   1.45ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.31ms                                     
+                          action_expert=  24.96ms  action_expert_per_step=   6.24ms  cache_age_ms=5517.48ms                               
+                          response_decode=   0.04ms  server_total=  26.71ms                                                               
+INFO:     127.0.0.1:47416 - "POST /act HTTP/1.1" 200 OK
+[23:39:30 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5406.1ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #37 client_loop_gap_ms=5377.07ms  request_preprocess=   1.28ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.26ms                                     
+                          action_expert=  25.44ms  action_expert_per_step=   6.36ms  cache_age_ms=5406.11ms                               
+                          response_decode=   0.04ms  server_total=  27.04ms                                                               
+INFO:     127.0.0.1:47418 - "POST /act HTTP/1.1" 200 OK
+[23:39:35 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5482.7ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #38 client_loop_gap_ms=5454.11ms  request_preprocess=   1.28ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.46ms                                     
+                          action_expert=  24.95ms  action_expert_per_step=   6.24ms  cache_age_ms=5482.75ms                               
+                          response_decode=   0.04ms  server_total=  26.52ms                                                               
+INFO:     127.0.0.1:36308 - "POST /act HTTP/1.1" 200 OK
+[23:39:41 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5481.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #39 client_loop_gap_ms=5453.39ms  request_preprocess=   1.27ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.12ms                                     
+                          action_expert=  25.35ms  action_expert_per_step=   6.34ms  cache_age_ms=5481.93ms                               
+                          response_decode=   0.04ms  server_total=  26.91ms                                                               
+INFO:     127.0.0.1:36316 - "POST /act HTTP/1.1" 200 OK
+[23:39:46 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5493.0ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #40 client_loop_gap_ms=5464.19ms  request_preprocess=   1.27ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.76ms                                     
+                          action_expert=  25.02ms  action_expert_per_step=   6.26ms  cache_age_ms=5493.01ms                               
+                          response_decode=   0.04ms  server_total=  26.60ms                                                               
+INFO:     127.0.0.1:49344 - "POST /act HTTP/1.1" 200 OK
+[23:39:52 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5522.5ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #41 client_loop_gap_ms=5494.38ms  request_preprocess=   1.36ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.13ms                                     
+                          action_expert=  25.59ms  action_expert_per_step=   6.40ms  cache_age_ms=5522.54ms                               
+                          response_decode=   0.04ms  server_total=  27.28ms                                                               
+INFO:     127.0.0.1:57180 - "POST /act HTTP/1.1" 200 OK
+[23:39:57 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5502.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #42 client_loop_gap_ms=5472.79ms  request_preprocess=   1.28ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.62ms                                     
+                          action_expert=  25.28ms  action_expert_per_step=   6.32ms  cache_age_ms=5502.20ms                               
+                          response_decode=   0.04ms  server_total=  26.89ms                                                               
+INFO:     127.0.0.1:57184 - "POST /act HTTP/1.1" 200 OK
+[23:40:03 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5524.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #43 client_loop_gap_ms=5495.72ms  request_preprocess=   1.68ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.25ms                                     
+                          action_expert=  34.67ms  action_expert_per_step=   8.67ms  cache_age_ms=5524.24ms                               
+                          response_decode=   0.05ms  server_total=  36.73ms                                                               
+INFO:     127.0.0.1:51132 - "POST /act HTTP/1.1" 200 OK
+[23:40:09 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5513.8ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #44 client_loop_gap_ms=5475.15ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.24ms                                     
+                          action_expert=  34.78ms  action_expert_per_step=   8.70ms  cache_age_ms=5513.84ms                               
+                          response_decode=   0.05ms  server_total=  36.72ms                                                               
+INFO:     127.0.0.1:51138 - "POST /act HTTP/1.1" 200 OK
+[23:40:14 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5532.0ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #45 client_loop_gap_ms=5493.04ms  request_preprocess=   1.58ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.65ms                                     
+                          action_expert=  34.81ms  action_expert_per_step=   8.70ms  cache_age_ms=5532.03ms                               
+                          response_decode=   0.06ms  server_total=  36.76ms                                                               
+INFO:     127.0.0.1:56784 - "POST /act HTTP/1.1" 200 OK
+[23:40:20 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5546.6ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #46 client_loop_gap_ms=5507.91ms  request_preprocess=   1.61ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.71ms                                     
+                          action_expert=  35.26ms  action_expert_per_step=   8.81ms  cache_age_ms=5546.56ms                               
+                          response_decode=   0.06ms  server_total=  37.23ms                                                               
+INFO:     127.0.0.1:56786 - "POST /act HTTP/1.1" 200 OK
+[23:40:25 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5530.5ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #47 client_loop_gap_ms=5490.65ms  request_preprocess=   1.57ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.12ms                                     
+                          action_expert=  34.62ms  action_expert_per_step=   8.65ms  cache_age_ms=5530.52ms                               
+                          response_decode=   0.06ms  server_total=  36.55ms                                                               
+INFO:     127.0.0.1:47770 - "POST /act HTTP/1.1" 200 OK
+[23:40:31 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5615.7ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #48 client_loop_gap_ms=5576.91ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.36ms                                     
+                          action_expert=  35.13ms  action_expert_per_step=   8.78ms  cache_age_ms=5615.66ms                               
+                          response_decode=   0.07ms  server_total=  37.16ms                                                               
+INFO:     127.0.0.1:47778 - "POST /act HTTP/1.1" 200 OK
+[23:40:36 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5595.0ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #49 client_loop_gap_ms=5555.24ms  request_preprocess=   3.74ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.61ms                                     
+                          action_expert=  35.11ms  action_expert_per_step=   8.78ms  cache_age_ms=5595.03ms                               
+                          response_decode=   0.06ms  server_total=  39.28ms                                                               
+INFO:     127.0.0.1:56344 - "POST /act HTTP/1.1" 200 OK
+[23:40:42 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5514.5ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #50 client_loop_gap_ms=5472.58ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.06ms                                     
+                          action_expert=  34.61ms  action_expert_per_step=   8.65ms  cache_age_ms=5514.46ms                               
+                          response_decode=   0.05ms  server_total=  36.56ms                                                               
+                 INFO     | >> [*]  per-episode means (first step of each episode excluded):                    psi_r2_serve_simple.py:518
+                            episode  n       client_loop_gap_  request_preproce    vlm_preprocess                                         
+                          vlm_forward  slow_vlm_offpath     action_expert  action_expert_pe      cache_age_ms                             
+                          response_decode      server_total                                                                               
+                            1        33              4677.78ms             1.45ms             0.00ms                                      
+                          0.00ms            61.11ms            28.89ms             7.22ms          4735.35ms                              
+                          0.05ms            30.68ms                                                                                       
+                            2        15              5478.79ms             1.61ms             0.00ms                                      
+                          0.00ms            34.98ms            30.37ms             7.59ms          5518.56ms                              
+                          0.05ms            32.33ms                                                                                       
+                          overall:                                                                                                        
+                            client_loop_gap_ms       n=48    mean=4928.10ms  p50=4726.99ms  p95=5507.91ms                                 
+                          max=5576.91ms                                                                                                   
+                            request_preprocess       n=48    mean=   1.50ms  p50=   1.37ms  p95=   1.84ms  max=                           
+                          3.74ms                                                                                                          
+                            vlm_preprocess           n=48    mean=   0.00ms  p50=   0.00ms  p95=   0.00ms  max=                           
+                          0.00ms                                                                                                          
+                            vlm_forward              n=48    mean=   0.00ms  p50=   0.00ms  p95=   0.00ms  max=                           
+                          0.00ms                                                                                                          
+                            slow_vlm_offpath         n=48    mean=  52.94ms  p50=  41.32ms  p95=  48.00ms  max=                           
+                          709.06ms                                                                                                        
+                            action_expert            n=48    mean=  29.36ms  p50=  25.69ms  p95=  35.11ms  max=                           
+                          35.26ms                                                                                                         
+                            action_expert_per_step   n=48    mean=   7.34ms  p50=   6.42ms  p95=   8.78ms  max=                           
+                          8.81ms                                                                                                          
+                            cache_age_ms             n=48    mean=4980.10ms  p50=4767.26ms  p95=5546.56ms                                 
+                          max=5615.66ms                                                                                                   
+                            response_decode          n=48    mean=   0.05ms  p50=   0.04ms  p95=   0.06ms  max=                           
+                          0.07ms                                                                                                          
+                            server_total             n=48    mean=  31.20ms  p50=  27.40ms  p95=  37.16ms  max=                           
+                          39.28ms                                                                                                         
+                            raw rows:                                                                                                     
+                          .runs/finetune/simple/Efficient/g1wholebodyxmovepick-v0.simple.flow1000.cosine.lr1.0e                           
+                          -04.b128.gpus8.2604022205/inference_timing/ckpt40000_Ta24_rtc_20260818-233418.jsonl                             
+INFO:     127.0.0.1:50876 - "POST /act HTTP/1.1" 200 OK
+[23:40:47 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5575.7ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #51 client_loop_gap_ms=5533.46ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  42.13ms                                     
+                          action_expert=  34.77ms  action_expert_per_step=   8.69ms  cache_age_ms=5575.69ms                               
+                          response_decode=   0.06ms  server_total=  36.73ms                                                               
+INFO:     127.0.0.1:50892 - "POST /act HTTP/1.1" 200 OK
+[23:40:53 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5559.7ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #52 client_loop_gap_ms=5520.79ms  request_preprocess=   1.58ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.52ms                                     
+                          action_expert=  34.61ms  action_expert_per_step=   8.65ms  cache_age_ms=5559.69ms                               
+                          response_decode=   0.06ms  server_total=  36.55ms                                                               
+INFO:     127.0.0.1:60760 - "POST /act HTTP/1.1" 200 OK
+[23:40:59 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5550.4ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #53 client_loop_gap_ms=5511.96ms  request_preprocess=   1.64ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.09ms                                     
+                          action_expert=  34.68ms  action_expert_per_step=   8.67ms  cache_age_ms=5550.42ms                               
+                          response_decode=   0.05ms  server_total=  36.68ms                                                               
+INFO:     127.0.0.1:60776 - "POST /act HTTP/1.1" 200 OK
+[23:41:04 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5541.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #54 client_loop_gap_ms=5502.67ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.49ms                                     
+                          action_expert=  34.79ms  action_expert_per_step=   8.70ms  cache_age_ms=5541.25ms                               
+                          response_decode=   0.06ms  server_total=  36.73ms                                                               
+INFO:     127.0.0.1:60332 - "POST /act HTTP/1.1" 200 OK
+[23:41:10 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5543.4ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #55 client_loop_gap_ms=5504.80ms  request_preprocess=   1.60ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.29ms                                     
+                          action_expert=  34.84ms  action_expert_per_step=   8.71ms  cache_age_ms=5543.42ms                               
+                          response_decode=   0.06ms  server_total=  36.79ms                                                               
+INFO:     127.0.0.1:60338 - "POST /act HTTP/1.1" 200 OK
+[23:41:15 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5553.3ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #56 client_loop_gap_ms=5514.30ms  request_preprocess=   1.62ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.46ms                                     
+                          action_expert=  34.75ms  action_expert_per_step=   8.69ms  cache_age_ms=5553.27ms                               
+                          response_decode=   0.06ms  server_total=  36.73ms                                                               
+INFO:     127.0.0.1:60438 - "POST /act HTTP/1.1" 200 OK
+[23:41:21 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5566.7ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #57 client_loop_gap_ms=5528.03ms  request_preprocess=   1.62ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.56ms                                     
+                          action_expert=  34.67ms  action_expert_per_step=   8.67ms  cache_age_ms=5566.73ms                               
+                          response_decode=   0.06ms  server_total=  36.65ms                                                               
+INFO:     127.0.0.1:60452 - "POST /act HTTP/1.1" 200 OK
+[23:41:26 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5577.0ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #58 client_loop_gap_ms=5537.66ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  29.15ms                                     
+                          action_expert=  34.69ms  action_expert_per_step=   8.67ms  cache_age_ms=5576.97ms                               
+                          response_decode=   0.05ms  server_total=  36.64ms                                                               
+INFO:     127.0.0.1:45154 - "POST /act HTTP/1.1" 200 OK
+[23:41:32 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5514.2ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #59 client_loop_gap_ms=5475.63ms  request_preprocess=   1.58ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  31.63ms                                     
+                          action_expert=  34.81ms  action_expert_per_step=   8.70ms  cache_age_ms=5514.19ms                               
+                          response_decode=   0.06ms  server_total=  36.75ms                                                               
+INFO:     127.0.0.1:40934 - "POST /act HTTP/1.1" 200 OK
+[23:41:37 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5562.9ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #60 client_loop_gap_ms=5524.16ms  request_preprocess=   1.59ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.81ms                                     
+                          action_expert=  34.90ms  action_expert_per_step=   8.72ms  cache_age_ms=5562.88ms                               
+                          response_decode=   0.06ms  server_total=  36.85ms                                                               
+INFO:     127.0.0.1:40940 - "POST /act HTTP/1.1" 200 OK
+[23:41:43 08/18] INFO     | >> [*] Psi-R2 action (24, 36) | stream | slow=started | cache_age=5574.6ms          psi_r2_serve_simple.py:547
+                 INFO     | >> [*]  ep2 #61 client_loop_gap_ms=5535.58ms  request_preprocess=   1.63ms          psi_r2_serve_simple.py:514
+                          vlm_preprocess=   0.00ms  vlm_forward=   0.00ms  slow_vlm_offpath=  41.42ms                                     
+                          action_expert=  35.27ms  action_expert_per_step=   8.82ms  cache_age_ms=5574.58ms                               
+                          response_decode=   0.06ms  server_total=  37.26ms                                                               
+INFO:     127.0.0.1:51054 - "POST /act HTTP/1.1" 200 OK

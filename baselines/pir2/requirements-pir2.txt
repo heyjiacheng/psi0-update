@@ -1,0 +1,39 @@
+# Upstream-exact pins from pi-r2-flow/learning/Isaac-GR00T, for a dedicated
+# .venv-pir2 (see baselines/pir2/README.md). Overlays the base `src/` install the
+# same way baselines/dp/requirements-dp.txt does.
+#
+# The `pir2` dependency group in the root pyproject.toml holds these back to the
+# `psi` group's torch / transformers versions so a single lockfile still resolves;
+# install this file instead when you want the paper environment verbatim.
+torch==2.7.1
+torchvision==0.22.1
+torchcodec==0.4.0
+transformers==4.57.3
+albumentations==1.4.18
+av==16.1.0
+click==8.1.8
+datasets==3.6.0
+deepspeed==0.17.6
+diffusers==0.35.1
+dm-tree
+einops==0.8.1
+gymnasium==1.2.2
+huggingface-hub[cli]
+jsonlines==4.0.0
+lmdb==1.7.5
+matplotlib==3.10.1
+msgpack==1.1.0
+msgpack-numpy==0.4.8
+numpy==1.26.4
+omegaconf==2.3.0
+opencv-python-headless>=4.5,<4.13
+pandas==2.2.3
+peft==0.17.1
+pyzmq==27.0.1
+scipy==1.15.3
+termcolor==3.2.0
+tyro==0.9.17
+wandb==0.23.0
+# Optional: enables flash_attention_2 in the Qwen3 backbone. Without it the
+# backbone falls back to sdpa (slower, same numerics-to-within-tolerance).
+# flash-attn==2.7.4.post1

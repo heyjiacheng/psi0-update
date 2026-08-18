@@ -27,6 +27,7 @@ from transformers import Qwen3VLForConditionalGeneration, AutoConfig, AutoProces
 from qwen_vl_utils import process_vision_info
 
 from psi.utils import initialize_overwatch, count_parameters
+from psi.utils import timing
 
 # from InternVLA.model.modules.action_model.DiT_modules.models import DiT
 # from InternVLA.model.modules.projector.QFormer import CrossAttentionBlock
@@ -1663,80 +1664,84 @@ class Psi0Model(nn.Module):
         batch_pixel_values = []
         batch_image_grid_thw = []
 
+        with timing.timed("vlm_preprocess", self.device):
+            for observation, instruction in zip(observations, instructions):
+                messages = []
+                content = [{"type": "image", "image": img} for img in observation]
+                content.append({"type": "text", "text": instruction})
+                user_msg = {"role": "user", "content": content}
+                messages.append([user_msg])
+                texts = [
+                    self.vlm_processor.apply_chat_template(
+                        m, tokenize=False, add_generation_prompt=True
+                    )
+                    for m in messages
+                ]
+                image_inputs, video_inputs = process_vision_info(messages, image_patch_size=16)
+                inputs = self.vlm_processor(
+                    text=texts,
+                    images=image_inputs,
+                    videos=video_inputs,
+                    padding=True,
+                    return_tensors="pt",
+                ).to(self.device)
+                # input_ids torch.Size([1, 80])
+                # attention_mask torch.Size([1, 80])
+                # pixel_values torch.Size([256, 1536])
+                # image_grid_thw torch.Size([1, 3])
+                batch_input_ids.append(inputs['input_ids'].squeeze(0))
+                batch_attention_mask.append(inputs['attention_mask'].squeeze(0))
+                batch_pixel_values.append(inputs['pixel_values'])
+                batch_image_grid_thw.append(inputs['image_grid_thw'].squeeze(0))
 
-        for observation, instruction in zip(observations, instructions):
-            messages = []
-            content = [{"type": "image", "image": img} for img in observation]
-            content.append({"type": "text", "text": instruction})
-            user_msg = {"role": "user", "content": content}
-            messages.append([user_msg])
-            texts = [
-                self.vlm_processor.apply_chat_template(
-                    m, tokenize=False, add_generation_prompt=True
-                )
-                for m in messages
-            ]
-            image_inputs, video_inputs = process_vision_info(messages, image_patch_size=16)
-            inputs = self.vlm_processor(
-                text=texts,
-                images=image_inputs,
-                videos=video_inputs,
-                padding=True,
-                return_tensors="pt",
-            ).to(self.device)
-            # input_ids torch.Size([1, 80])
-            # attention_mask torch.Size([1, 80])
-            # pixel_values torch.Size([256, 1536])
-            # image_grid_thw torch.Size([1, 3])
-            batch_input_ids.append(inputs['input_ids'].squeeze(0))
-            batch_attention_mask.append(inputs['attention_mask'].squeeze(0))
-            batch_pixel_values.append(inputs['pixel_values'])
-            batch_image_grid_thw.append(inputs['image_grid_thw'].squeeze(0))
-
-        batch_input_ids = torch.stack(batch_input_ids) # (B, 80)
-        batch_attention_mask = torch.stack(batch_attention_mask) # (B, 80)
-        batch_pixel_values = torch.stack(batch_pixel_values) # (B, 256, 1536)
-        batch_image_grid_thw = torch.stack(batch_image_grid_thw) # (B, 3)
+            batch_input_ids = torch.stack(batch_input_ids) # (B, 80)
+            batch_attention_mask = torch.stack(batch_attention_mask) # (B, 80)
+            batch_pixel_values = torch.stack(batch_pixel_values) # (B, 256, 1536)
+            batch_image_grid_thw = torch.stack(batch_image_grid_thw) # (B, 3)
 
         with torch.autocast(str(self.device).split(":")[0], dtype=torch.bfloat16):
             # extract vision + language features
-            output = self.vlm_model(
-                input_ids=batch_input_ids,
-                attention_mask=batch_attention_mask,
-                pixel_values=batch_pixel_values,
-                image_grid_thw=batch_image_grid_thw,
-                output_hidden_states=True,
-                return_dict=True
-            )
-            vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
-            
+            with timing.timed("vlm_forward", self.device):
+                output = self.vlm_model(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                    pixel_values=batch_pixel_values,
+                    image_grid_thw=batch_image_grid_thw,
+                    output_hidden_states=True,
+                    return_dict=True
+                )
+                vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
 
-            # use hidden states from the last layer
-            vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
-            vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
 
-            # generate action from noise
-            action_samples = torch.randn(
-                bsz, self.action_horizon, self.action_dim, device=self.device
-            )
-            self.noise_scheduler.set_timesteps(num_inference_steps)
+                # use hidden states from the last layer
+                vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
+                vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
 
-            for timestep in self.noise_scheduler.timesteps:
-                batched_timestep = timestep.expand(bsz).to(self.device)
-                model_pred = self.action_header(
-                    hidden_states=None,
-                    timestep=batched_timestep,
-                    joint_attention_kwargs=dict(
-                        action_hidden_embeds=action_samples, # (B,Tp,Da)
-                        views=vlm_hidden_states,  # (B,V,N,D)
-                        obs=states,  # (B,1,M)
-                        traj2ds=traj2ds,  # (B, C, 3, H, W)
-                    ),
-                    return_dict=True,
-                ).action
-                action_samples = self.noise_scheduler.step(
-                    model_output=model_pred, timestep=timestep, sample=action_samples # type: ignore
-                ).prev_sample
+            with timing.timed("action_expert", self.device):
+                # generate action from noise
+                action_samples = torch.randn(
+                    bsz, self.action_horizon, self.action_dim, device=self.device
+                )
+                self.noise_scheduler.set_timesteps(num_inference_steps)
+
+                for timestep in self.noise_scheduler.timesteps:
+                    batched_timestep = timestep.expand(bsz).to(self.device)
+                    model_pred = self.action_header(
+                        hidden_states=None,
+                        timestep=batched_timestep,
+                        joint_attention_kwargs=dict(
+                            action_hidden_embeds=action_samples, # (B,Tp,Da)
+                            views=vlm_hidden_states,  # (B,V,N,D)
+                            obs=states,  # (B,1,M)
+                            traj2ds=traj2ds,  # (B, C, 3, H, W)
+                        ),
+                        return_dict=True,
+                    ).action
+                    action_samples = self.noise_scheduler.step(
+                        model_output=model_pred, timestep=timestep, sample=action_samples # type: ignore
+                    ).prev_sample
+
+            timing.record("action_expert_per_step", timing.get("action_expert") / max(num_inference_steps, 1))
 
         return action_samples.float()
 
@@ -1778,92 +1783,97 @@ class Psi0Model(nn.Module):
         batch_image_grid_thw = []
 
 
-        for observation, instruction in zip(observations, instructions):
-            messages = []
-            content = [{"type": "image", "image": img} for img in observation]
-            content.append({"type": "text", "text": instruction})
-            user_msg = {"role": "user", "content": content}
-            messages.append([user_msg])
-            texts = [
-                self.vlm_processor.apply_chat_template(
-                    m, tokenize=False, add_generation_prompt=True
-                )
-                for m in messages
-            ]
-            image_inputs, video_inputs = process_vision_info(messages, image_patch_size=16)
-            inputs = self.vlm_processor(
-                text=texts,
-                images=image_inputs,
-                videos=video_inputs,
-                padding=True,
-                return_tensors="pt",
-            ).to(self.device)
-            # input_ids torch.Size([1, 80])
-            # attention_mask torch.Size([1, 80])
-            # pixel_values torch.Size([256, 1536])
-            # image_grid_thw torch.Size([1, 3])
-            batch_input_ids.append(inputs['input_ids'].squeeze(0))
-            batch_attention_mask.append(inputs['attention_mask'].squeeze(0))
-            batch_pixel_values.append(inputs['pixel_values'])
-            batch_image_grid_thw.append(inputs['image_grid_thw'].squeeze(0))
+        with timing.timed("vlm_preprocess", self.device):
+            for observation, instruction in zip(observations, instructions):
+                messages = []
+                content = [{"type": "image", "image": img} for img in observation]
+                content.append({"type": "text", "text": instruction})
+                user_msg = {"role": "user", "content": content}
+                messages.append([user_msg])
+                texts = [
+                    self.vlm_processor.apply_chat_template(
+                        m, tokenize=False, add_generation_prompt=True
+                    )
+                    for m in messages
+                ]
+                image_inputs, video_inputs = process_vision_info(messages, image_patch_size=16)
+                inputs = self.vlm_processor(
+                    text=texts,
+                    images=image_inputs,
+                    videos=video_inputs,
+                    padding=True,
+                    return_tensors="pt",
+                ).to(self.device)
+                # input_ids torch.Size([1, 80])
+                # attention_mask torch.Size([1, 80])
+                # pixel_values torch.Size([256, 1536])
+                # image_grid_thw torch.Size([1, 3])
+                batch_input_ids.append(inputs['input_ids'].squeeze(0))
+                batch_attention_mask.append(inputs['attention_mask'].squeeze(0))
+                batch_pixel_values.append(inputs['pixel_values'])
+                batch_image_grid_thw.append(inputs['image_grid_thw'].squeeze(0))
 
-        batch_input_ids = torch.stack(batch_input_ids) # (B, 80)
-        batch_attention_mask = torch.stack(batch_attention_mask) # (B, 80)
-        batch_pixel_values = torch.stack(batch_pixel_values) # (B, 256, 1536)
-        batch_image_grid_thw = torch.stack(batch_image_grid_thw) # (B, 3)
+            batch_input_ids = torch.stack(batch_input_ids) # (B, 80)
+            batch_attention_mask = torch.stack(batch_attention_mask) # (B, 80)
+            batch_pixel_values = torch.stack(batch_pixel_values) # (B, 256, 1536)
+            batch_image_grid_thw = torch.stack(batch_image_grid_thw) # (B, 3)
 
         with torch.autocast(str(self.device).split(":")[0], dtype=torch.bfloat16):
             # extract vision + language features
-            output = self.vlm_model(
-                input_ids=batch_input_ids,
-                attention_mask=batch_attention_mask,
-                pixel_values=batch_pixel_values,
-                image_grid_thw=batch_image_grid_thw,
-                output_hidden_states=True,
-                return_dict=True
-            )
-            vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
-            
+            with timing.timed("vlm_forward", self.device):
+                output = self.vlm_model(
+                    input_ids=batch_input_ids,
+                    attention_mask=batch_attention_mask,
+                    pixel_values=batch_pixel_values,
+                    image_grid_thw=batch_image_grid_thw,
+                    output_hidden_states=True,
+                    return_dict=True
+                )
+                vlm_hidden_states_ = output.hidden_states # len(vlm_hidden_states_) == 29
 
-            # use hidden states from the last layer
-            vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
-            vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
 
-            # generate action from noise
-            action_samples = torch.randn(
-                bsz, self.action_horizon, self.action_dim, device=self.device
-            )
-            self.noise_scheduler.set_timesteps(num_inference_steps)
+                # use hidden states from the last layer
+                vlm_hidden_states = vlm_hidden_states_[-1] # shape (B, seq_len, D_h)  shape(16, 80, 2048)
+                vlm_hidden_states = vlm_hidden_states.unsqueeze(1) # shape (B, 1, seq_len, D_h) (16, 1, 80, 2048)
 
-            # self.noise_scheduler.timesteps: tensor([1000.,  889.,  778.,  667.,  556.,  445.,  334.,  223.,  112.,    1.])
-            # self.noise_scheduler.sigmas: tensor([1.0000, 0.8890, 0.7780, 0.6670, 0.5560, 0.4450, 0.3340, 0.2230, 0.1120, 0.0010, 0.0000])
+            with timing.timed("action_expert", self.device):
+                # generate action from noise
+                action_samples = torch.randn(
+                    bsz, self.action_horizon, self.action_dim, device=self.device
+                )
+                self.noise_scheduler.set_timesteps(num_inference_steps)
 
-            for i, timestep in enumerate(self.noise_scheduler.timesteps):
-                # batched_timestep = timestep.expand(bsz).to(self.device).detach()
+                # self.noise_scheduler.timesteps: tensor([1000.,  889.,  778.,  667.,  556.,  445.,  334.,  223.,  112.,    1.])
+                # self.noise_scheduler.sigmas: tensor([1.0000, 0.8890, 0.7780, 0.6670, 0.5560, 0.4450, 0.3340, 0.2230, 0.1120, 0.0010, 0.0000])
 
-                batched_timestep_masked = torch.where(prefix_mask, 0, timestep.to(self.device)) # shape (B, H)
+                for i, timestep in enumerate(self.noise_scheduler.timesteps):
+                    # batched_timestep = timestep.expand(bsz).to(self.device).detach()
 
-                # replace action_samples with clean prev_actions when prefix_mask == True
-                action_samples = torch.where(prefix_mask[:, :, None], prev_actions, action_samples)
+                    batched_timestep_masked = torch.where(prefix_mask, 0, timestep.to(self.device)) # shape (B, H)
 
-                model_pred = self.action_header(
-                    hidden_states=None,
-                    timestep=batched_timestep_masked,
-                    joint_attention_kwargs=dict(
-                        action_hidden_embeds=action_samples, # (B,Tp,Da)
-                        views=vlm_hidden_states,  # (B,V,N,D)
-                        obs=states,  # (B,1,M)
-                        traj2ds=traj2ds,  # (B, C, 3, H, W)
-                    ),
-                    return_dict=True,
-                ).action
+                    # replace action_samples with clean prev_actions when prefix_mask == True
+                    action_samples = torch.where(prefix_mask[:, :, None], prev_actions, action_samples)
 
-                action_samples = self.noise_scheduler.step(
-                    model_output=model_pred, timestep=timestep, sample=action_samples # type: ignore
-                ).prev_sample
+                    model_pred = self.action_header(
+                        hidden_states=None,
+                        timestep=batched_timestep_masked,
+                        joint_attention_kwargs=dict(
+                            action_hidden_embeds=action_samples, # (B,Tp,Da)
+                            views=vlm_hidden_states,  # (B,V,N,D)
+                            obs=states,  # (B,1,M)
+                            traj2ds=traj2ds,  # (B, C, 3, H, W)
+                        ),
+                        return_dict=True,
+                    ).action
 
-                # if i == len(self.noise_scheduler.timesteps) - 1:
-                #     action_samples = torch.where(prefix_mask[:, :, None], prev_actions, action_samples)
+                    action_samples = self.noise_scheduler.step(
+                        model_output=model_pred, timestep=timestep, sample=action_samples # type: ignore
+                    ).prev_sample
+
+                    # if i == len(self.noise_scheduler.timesteps) - 1:
+                    #     action_samples = torch.where(prefix_mask[:, :, None], prev_actions, action_samples)
+
+            timing.record("action_expert_per_step", timing.get("action_expert") / max(num_inference_steps, 1))
 
         return action_samples.float()
 

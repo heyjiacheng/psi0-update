@@ -1,0 +1,9 @@
+Psi-R2 contains an inference-schedule adaptation derived from PI-R2-Flow:
+
+  PI-R2: Reactive Real-time Flow Policies
+  Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES
+  https://github.com/pi-r2-flow/pi-r2-flow
+
+The referenced implementation is licensed under the Apache License, Version 2.0.
+Psi-R2 translates its per-position schedule to Psi0's opposite flow-time
+convention and integrates it with the Psi0 backbone and serving protocol.

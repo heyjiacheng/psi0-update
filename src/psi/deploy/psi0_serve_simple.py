@@ -19,7 +19,8 @@ from psi.deploy.helpers import *
 from psi.config.config import LaunchConfig, ServerConfig
 from psi.config.transform import SimpleRepackTransform, Psi0ModelTransform, ActionStateTransform
 from psi.utils import parse_args_to_tyro_config, pad_to_len, seed_everything
-from psi.utils.overwatch import initialize_overwatch 
+from psi.utils import timing
+from psi.utils.overwatch import initialize_overwatch
 
 overwatch = initialize_overwatch(__name__)
 
@@ -87,16 +88,32 @@ class Server:
                            f"action_exec_horizon={self.Ta}")
         self.last_serve_time = time.monotonic()
 
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        path = timing.open_log(
+            run_dir / "inference_timing" / f"ckpt{ckpt_step}_Ta{self.Ta}_{'rtc' if enable_rtc else 'nortc'}_{stamp}.jsonl"
+        )
+        if path is not None:
+            overwatch.info(f"Per-request inference timings -> {path}")
+
 
     def predict_action(self, payload: Dict[str, Any]) -> JSONResponse:
         # overwatch.info(f"Received request with payload: {payload}")
         try:
+            timing.reset()
+            request_t0 = time.perf_counter()
             request = RequestMessage.deserialize(payload)
             image_dict, instruction, history_dict, state_dict, gt_action, dataset_name = \
                 request.image, request.instruction, request.history, request.state, request.gt_action, request.dataset_name
             
             overwatch.info(f"Instruction: {instruction}")
             overwatch.info(f"history_dict: {history_dict}")
+
+            # A client-signalled reset (or the very first request) starts a new episode:
+            # that step runs the un-conditioned path, so it is timed and reported separately.
+            is_episode_start = getattr(self, "previous_action", None) is None or "reset" in history_dict
+            if is_episode_start:
+                timing.new_episode()
+            timing.tag(episode_start=is_episode_start)
 
             transforms = [self.model_transform.resize(), self.model_transform.center_crop()]
             t = v2.Compose(transforms)
@@ -115,17 +132,19 @@ class Server:
                 ).to(self.device)
 
             if not self.enable_rtc:
+                timing.tag(path="plain")
                 raw_pred_actions = self.model.predict_action(
-                    observations=[[t(Image.fromarray(img)) for img in image_dict.values()]], 
+                    observations=[[t(Image.fromarray(img)) for img in image_dict.values()]],
                     states=states.unsqueeze(0), # B, To, Ds
                     instructions=[instruction], # [Task] * B
-                    num_inference_steps=10, 
+                    num_inference_steps=10,
                     traj2ds=None
                 )
             else: # rtc
                 current_time = time.monotonic()
-                if self.previous_action is None or "reset" in history_dict: #  or (current_time - self.last_serve_time) > 30  #if idle more than 60s, reset previous action
+                if is_episode_start: #  or (current_time - self.last_serve_time) > 30  #if idle more than 60s, reset previous action
                     overwatch.info("===Reset or first step, without condition===")
+                    timing.tag(path="uncond")
                     raw_pred_actions = self.model.predict_action(
                         observations=[[t(Image.fromarray(img)) for img in image_dict.values()]], 
                         states=states.unsqueeze(0), # B, To, Ds
@@ -136,6 +155,8 @@ class Server:
                 else:
                     overwatch.info("RTC enabled, using RTC inference")
                     overwatch.info("Last chunk execution loop time: {:.2f}s ago".format(current_time - self.last_serve_time))
+                    timing.tag(path="rtc")
+                    timing.record("client_loop_gap_ms", (current_time - self.last_serve_time) * 1e3)
                     prev_actions = np.concatenate([
                         self.previous_action[None, self.Ta:, :], 
                         np.zeros((1, self.Ta, self.Da), dtype=np.float32)
@@ -159,6 +180,13 @@ class Server:
             pred_actions = pred_actions[:self.Ta] # type:ignore
             overwatch.info(f"Return Action ({pred_actions.shape})") # : {pred_actions}
 
+            timing.record("server_total", (time.perf_counter() - request_t0) * 1e3)
+            ep = timing.episode()
+            last = timing.flush()
+            overwatch.info(f"[timing] ep{ep} #{timing.num_requests()} {timing.format_last(last)}")
+            if timing.num_requests() % 50 == 0:
+                overwatch.info(f"[timing] {timing.full_report()}")
+
             self.last_serve_time = time.monotonic()
             response = ResponseMessage(pred_actions, 0.0) # type:ignore
             return JSONResponse(content=response.serialize())
@@ -173,12 +201,22 @@ class Server:
         self.app = FastAPI()
         self.app.post("/act")(self.predict_action)
         self.app.get("/health")(lambda: JSONResponse(content={"status": "ok"}))
+        self.app.get("/timing")(lambda: JSONResponse(content={
+            "requests": timing.num_requests(),
+            "episodes": timing.episode(),
+            "log": str(timing.log_path()),
+            "report": timing.full_report(),
+        }))
         overwatch.info(f"Server listens on {host}:{port}")
         try:
             uvicorn.run(self.app, host=host, port=port)
         except Exception as e:
             overwatch.warning(f"Server crashed, {e}")
         finally:
+            # Runs on Ctrl-C too, so a full eval session always ends with a report.
+            if timing.num_requests():
+                overwatch.info(f"[timing] final report over {timing.num_requests()} requests, "
+                               f"{timing.episode()} episodes:\n{timing.full_report()}")
             overwatch.info("Server stopped.")
             exit(1)
 
