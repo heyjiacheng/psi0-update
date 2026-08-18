@@ -49,10 +49,12 @@ Ta % d == 0
 ```
 
 At an episode reset, the server runs ordinary scalar-time Psi0 flow to obtain a
-clean bootstrap chunk. This full-flow path retains Psi0's original **10 denoise
-evaluations**; `fast_substeps=1` is a separate PI-R2 rolling-update setting. The
-server then seeds the rolling buffer on the per-position flow manifold and starts
-PI-R2 updates. Later `/act` calls immediately use the cached slow
+clean bootstrap chunk. Both this full-flow path and each PI-R2 rolling update
+default to Psi0's original **10 denoise evaluations**. The rolling update still
+uses PI-R2's exact per-position start/target schedule; only the number of Euler
+substeps differs from the released PI-R2 default of one. The server then seeds
+the rolling buffer on the per-position flow manifold and starts PI-R2 updates.
+Later `/act` calls immediately use the cached slow
 features with the new proprioceptive state while a single latest-wins worker
 refreshes Qwen features from the new image.
 
@@ -75,6 +77,14 @@ PI-R2 uses `tau=0` for noise and `tau=noise_s` for clean actions. Psi0 uses
 ```text
 sigma = 1 - tau / noise_s
 psi_timestep = sigma * train_diffusion_steps
+```
+
+For exact equivalence with PI-R2's released Euler update, Psi-R2 also converts
+the action increment (Psi and PI-R2 predict opposite velocity directions):
+
+```text
+delta_x = noise_s * delta_sigma * velocity_psi
+        = delta_tau * velocity_pi_r2
 ```
 
 PI-R2 fixes its state token at `tau=0`; after the same conversion, Psi conditions

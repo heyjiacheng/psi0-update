@@ -28,16 +28,22 @@ from psi.config.transform import (
     SimpleRepackTransform,
 )
 from psi.deploy.helpers import RequestMessage, ResponseMessage
-from psi.utils import pad_to_len, parse_args_to_tyro_config, seed_everything
+from psi.utils import (
+    pad_to_len,
+    parse_args_to_tyro_config,
+    seed_everything,
+    timing,
+)
 from psi.utils.overwatch import initialize_overwatch
-from psi.utils import timing
 from psi_r2.models.psi_r2 import PsiR2Model, SlowFeatures
 from psi_r2.models.schedule import PiR2Schedule
 
 overwatch = initialize_overwatch(__name__)
 
-# Preserve the original SIMPLE Psi0 flow sampler on every full-flow path.
-# PI-R2 fast substeps are a separate rolling-sampler setting below.
+# Preserve the original SIMPLE Psi0 integration budget on both the scalar
+# bootstrap and each PI-R2 rolling update. The rolling time grid remains the
+# PI-R2 per-position schedule; only its Euler subdivision count differs from
+# the released PI-R2 default.
 PSI0_DENOISE_STEPS = 10
 
 
@@ -67,9 +73,13 @@ class PsiR2ServerConfig(BaseModel):
         ),
     )
     fast_substeps: int = Field(
-        default=1,
+        default=PSI0_DENOISE_STEPS,
         ge=1,
-        description="Velocity evaluations per PI-R2 fast update.",
+        description=(
+            "Velocity evaluations per PI-R2 fast update. The default preserves "
+            "Psi0's original 10-step denoise budget while retaining PI-R2's "
+            "per-position schedule."
+        ),
     )
     noise_s: float = Field(default=0.999, gt=0.0, le=1.0)
     async_slow: bool = Field(

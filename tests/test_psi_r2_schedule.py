@@ -41,7 +41,9 @@ class PiR2ScheduleTest(unittest.TestCase):
         )
 
     def test_rolling_update_closes_cycle_and_emits_new_clean_window(self) -> None:
-        schedule = PiR2Schedule(horizon=10, slide_steps=2)
+        # noise_s=1 makes unit velocity follow the exact interpolation manifold;
+        # the separate reference-equivalence test covers noise_s != 1.
+        schedule = PiR2Schedule(horizon=10, slide_steps=2, noise_s=1.0)
         rolling = PiR2RollingBuffer(schedule)
         clean = torch.zeros(1, 10, 3)
         initial_noise = torch.ones_like(clean)
@@ -67,6 +69,69 @@ class PiR2ScheduleTest(unittest.TestCase):
                     expected_sigma.unsqueeze(-1).expand_as(rolling.actions),
                 )
             )
+
+    def test_euler_update_matches_reference_tau_equations(self) -> None:
+        """Converted Psi coordinates reproduce PI-R2's action/time transition."""
+        schedule = PiR2Schedule(horizon=10, slide_steps=2, noise_s=0.7)
+        rolling = PiR2RollingBuffer(schedule)
+        generator = torch.Generator().manual_seed(7)
+        clean = torch.randn(1, 10, 3, generator=generator)
+        seed_noise = torch.randn(1, 10, 3, generator=generator)
+        tail_noise = torch.randn(1, 2, 3, generator=generator)
+        rolling.seed(clean, noise=seed_noise)
+
+        tau = schedule.initial_tau().unsqueeze(0)
+        reference_actions = (
+            (1.0 - tau.unsqueeze(-1) / schedule.noise_s) * seed_noise
+            + (tau.unsqueeze(-1) / schedule.noise_s) * clean
+        )
+        target_tau = torch.cat(
+            [
+                torch.full((schedule.slide_steps,), schedule.noise_s),
+                schedule.initial_tau()[: -schedule.slide_steps],
+            ]
+        ).unsqueeze(0)
+        dt_tau = (target_tau - tau).clamp(min=0.0) / 3.0
+
+        def reference_velocity(
+            actions: torch.Tensor, tau_value: torch.Tensor
+        ) -> torch.Tensor:
+            return 0.25 * actions + tau_value.unsqueeze(-1)
+
+        for _ in range(3):
+            reference_actions = reference_actions + dt_tau.unsqueeze(
+                -1
+            ) * reference_velocity(reference_actions, tau)
+            tau = tau + dt_tau
+        reference_snapshot = reference_actions.clone()
+        reference_actions = torch.cat(
+            [reference_actions[:, schedule.slide_steps :], tail_noise], dim=1
+        )
+        tau = torch.cat(
+            [
+                tau[:, schedule.slide_steps :],
+                torch.zeros(1, schedule.slide_steps),
+            ],
+            dim=1,
+        )
+
+        def psi_velocity(
+            actions: torch.Tensor, sigma: torch.Tensor
+        ) -> torch.Tensor:
+            tau_value = (1.0 - sigma) * schedule.noise_s
+            return -reference_velocity(actions, tau_value)
+
+        snapshot = rolling.denoise_and_slide(
+            psi_velocity,
+            substeps=3,
+            tail_noise=tail_noise,
+        )
+
+        self.assertTrue(torch.allclose(snapshot, reference_snapshot, atol=1e-6))
+        self.assertTrue(torch.allclose(rolling.actions, reference_actions, atol=1e-6))
+        self.assertTrue(
+            torch.allclose(rolling.sigma, 1.0 - tau / schedule.noise_s, atol=1e-6)
+        )
 
     def test_requires_bootstrap_seed(self) -> None:
         rolling = PiR2RollingBuffer(PiR2Schedule(horizon=7, slide_steps=2))

@@ -202,6 +202,12 @@ class PiR2RollingBuffer:
                 "PI-R2 schedule drifted toward more noise before the slide"
             )
         delta = total_delta.clamp(max=0.0) / float(substeps)
+        # Reference PI-R2 advances actions with ``delta_tau * v_tau``. Under
+        # sigma = 1 - tau/noise_s and Psi's opposite velocity convention,
+        # ``delta_tau * v_tau == noise_s * delta_sigma * v_sigma``. Keep sigma
+        # itself on the fully converted target while scaling only the action
+        # Euler increment. This matters whenever noise_s != 1 (default 0.999).
+        action_delta = delta * self.schedule.noise_s
 
         for _ in range(substeps):
             velocity = velocity_fn(self.actions, self.sigma)
@@ -211,7 +217,8 @@ class PiR2RollingBuffer:
                     f"{tuple(velocity.shape)}, expected {tuple(self.actions.shape)}"
                 )
             self.actions = (
-                self.actions + delta.unsqueeze(-1).to(velocity.dtype) * velocity
+                self.actions
+                + action_delta.unsqueeze(-1).to(velocity.dtype) * velocity
             )
             self.sigma = self.sigma + delta
 

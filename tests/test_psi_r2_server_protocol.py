@@ -135,6 +135,10 @@ class PsiR2ServerProtocolTest(unittest.TestCase):
             PsiR2ServerConfig.model_fields["bootstrap_inference_steps"].default,
             10,
         )
+        self.assertEqual(
+            PsiR2ServerConfig.model_fields["fast_substeps"].default,
+            10,
+        )
 
     def test_act_keeps_psi_response_shape_across_bootstrap_and_fast_calls(self) -> None:
         server = make_server()
