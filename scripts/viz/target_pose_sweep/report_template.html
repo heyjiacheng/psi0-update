@@ -1,0 +1,572 @@
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Saira+Semi+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: success-rate strip; top-down target map beside the selected trial's video; hand-vs-target panels and the
+   trial (grid: grid-point) list below. Robot start frame, centimetres. Grid sweeps draw one cell per grid point,
+   coloured by its success rate on a diverging fail-grey-success ramp. */
+:root {
+  --bg: #f5f6f7; --panel: #ffffff; --ink: #15191d; --ink-2: #4c5660; --muted: #7d8791; --rule: #dde1e5;
+  --ok: #2a78d6; --fail: #d03b3b; --train: #2a78d6; --train-fill: #e3eefb; --table: #e6e3dc; --table-edge: #b9b3a6;
+  --demo: #9aa3ac; --chip-ok-bg: #e3eefb; --chip-fail-bg: #fbe6e6; --focus: #15191d; --mid: #f0efec;
+  --display: "Saira Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121518; --panel: #1a1e22; --ink: #e9ecef; --ink-2: #b4bcc4; --muted: #8a949e; --rule: #2d3339;
+    --ok: #4b94ea; --fail: #e45d5d; --train: #4b94ea; --train-fill: #1d2c3d; --table: #2a2824; --table-edge: #4d483f;
+    --demo: #6b747d; --chip-ok-bg: #1d3047; --chip-fail-bg: #3d2224; --focus: #e9ecef; --mid: #383835; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121518; --panel: #1a1e22; --ink: #e9ecef; --ink-2: #b4bcc4; --muted: #8a949e; --rule: #2d3339;
+  --ok: #4b94ea; --fail: #e45d5d; --train: #4b94ea; --train-fill: #1d2c3d; --table: #2a2824; --table-edge: #4d483f;
+  --demo: #6b747d; --chip-ok-bg: #1d3047; --chip-fail-bg: #3d2224; --focus: #e9ecef; --mid: #383835; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.5; margin: 0; }
+.page { max-width: 1320px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 40px; display: grid; gap: 18px; }
+@media (max-width: 520px) { .page { padding-inline: 16px; } }
+h1, h2 { font-family: var(--display); font-weight: 600; letter-spacing: 0.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: 28px; line-height: 1.15; }
+h2 { font-size: 18px; }
+header { display: grid; gap: 4px; }
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; color: var(--muted); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.progress { height: 4px; background: var(--rule); margin-top: 6px; }
+.progress i { display: block; height: 100%; background: var(--ink-2); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.stat { background: var(--panel); border: 1px solid var(--rule); padding: 10px 14px; display: grid; gap: 5px; min-width: 0; }
+.stat .label { color: var(--ink-2); font-size: 13px; }
+.stat .value { font-family: var(--display); font-size: 26px; font-weight: 600; line-height: 1; }
+.stat .value small { font-family: var(--mono); font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+.bar { height: 5px; background: var(--bg); border: 1px solid var(--rule); }
+.bar i { display: block; height: 100%; background: var(--ok); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 14px 16px; min-width: 0; display: grid; gap: 8px; }
+.head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.toggles, .nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.toggle, .nav button { font: inherit; font-size: 12.5px; padding: 3px 10px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink-2); cursor: pointer; }
+.toggle[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.toggle:focus-visible, .trial:focus-visible, .cell:focus-visible, button:focus-visible, tr:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; color: var(--ink-2); font-size: 12.5px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { width: 14px; height: 14px; overflow: visible; }
+.legend .ramp { display: inline-flex; gap: 2px; }
+.legend .ramp i { width: 14px; height: 12px; display: block; }
+#map { width: 100%; height: auto; display: block; touch-action: manipulation; }
+#map text { font-family: var(--body); }
+/* map text is sized in screen pixels by sizeText() below, whatever the map's width */
+.axis-label { fill: var(--muted); }
+.tick { fill: var(--muted); font-family: var(--mono) !important; }
+.halo { paint-order: stroke fill; stroke: var(--panel); stroke-linejoin: round; }
+.trial, .cell { cursor: pointer; }
+.trial .hit { fill: transparent; }
+.trial:hover .ring, .trial.sel .ring, .cell:hover .ring, .cell.sel .ring { stroke: var(--focus); }
+.ring { fill: none; stroke: transparent; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.cell .ring { stroke-width: 3; }
+.cell-label { font-family: var(--mono) !important; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.ok-dot { fill: var(--ok); stroke: var(--panel); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.fail-x { stroke: var(--fail); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; fill: none; }
+.fail-x-bg { stroke: var(--panel); stroke-width: 5.5; stroke-linecap: round; vector-effect: non-scaling-stroke; fill: none; }
+.track .ok-dot { stroke-width: 1; }
+.track.dense .fail-x { stroke-width: 1.6; }
+.track.dense .fail-x-bg { stroke-width: 3; }
+.reach { stroke: var(--muted); stroke-width: 1; vector-effect: non-scaling-stroke; fill: none; }
+.tooltip { position: fixed; pointer-events: none; z-index: 5; background: var(--ink); color: var(--panel); padding: 5px 9px; font-size: 12.5px; line-height: 1.4; }
+
+.inspector video, .novid { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; display: block; }
+.novid { display: grid; place-items: center; color: #c9ced3; font-size: 13px; }
+.chip { font-size: 12px; padding: 1px 8px; font-weight: 500; white-space: nowrap; font-family: var(--body); }
+.chip.ok { background: var(--chip-ok-bg); color: var(--ok); }
+.chip.fail { background: var(--chip-fail-bg); color: var(--fail); }
+.chip.none { background: var(--bg); color: var(--muted); }
+.runs { display: flex; flex-wrap: wrap; gap: 6px; }
+.runs button { font: inherit; font-family: var(--mono); font-size: 12px; padding: 2px 9px; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 5px; }
+.runs button.ok { background: var(--chip-ok-bg); color: var(--ok); }
+.runs button.fail { background: var(--chip-fail-bg); color: var(--fail); }
+.runs button[aria-pressed="true"] { border-color: var(--focus); }
+.runs .pending { font-family: var(--mono); font-size: 12px; padding: 2px 9px; border: 1px dashed var(--rule); color: var(--muted); }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 14px; margin: 0; font-size: 13px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; }
+
+.lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.track { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 520px) { .track { grid-template-columns: 1fr; } }
+.track svg { width: 100%; height: auto; display: block; }
+.track text { font-family: var(--body); }
+.track .t { font-size: 13px; color: var(--ink-2); }
+.tablewrap { overflow-x: auto; max-height: 460px; overflow-y: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px 8px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: var(--panel); }
+td { padding: 3px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+tbody tr { cursor: pointer; }
+tbody tr:hover, tbody tr.sel { background: var(--bg); }
+td.r, th.r { text-align: right; }
+.minibar { display: inline-block; width: 60px; height: 6px; background: var(--chip-fail-bg); vertical-align: middle; margin-left: 8px; }
+.minibar i { display: block; height: 100%; background: var(--ok); }
+.foot { color: var(--muted); font-size: 12px; font-family: var(--mono); overflow-wrap: anywhere; }
+</style>
+
+<div class="page">
+  <header>
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="headline"></h1>
+    <div class="progress" id="progress" hidden><i></i></div>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Success rates"></section>
+
+  <section class="main">
+    <div class="card">
+      <div class="head">
+        <h2>Target map</h2>
+        <div class="toggles" role="group" aria-label="Map layers">
+          <button class="toggle" id="t-demos" aria-pressed="true">Demo targets</button>
+          <button class="toggle" id="t-reach" aria-pressed="false">Hand reach</button>
+        </div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <svg id="map" role="img" aria-label="Top-down map of where the target was put and whether the policy succeeded"></svg>
+    </div>
+    <aside class="card inspector" aria-live="polite">
+      <div class="head">
+        <h2 id="insp-title">Trial</h2>
+        <div class="nav"><button id="prev" aria-label="Previous">&larr;</button><button id="next" aria-label="Next">&rarr;</button></div>
+      </div>
+      <div class="runs" id="insp-runs" hidden></div>
+      <div id="insp-video"></div>
+      <dl class="kv" id="insp-kv"></dl>
+    </aside>
+  </section>
+
+  <section class="lower">
+    <div class="card">
+      <h2>Hand vs target</h2>
+      <div class="track" id="track"></div>
+    </div>
+    <div class="card">
+      <h2 id="list-title">Trials</h2>
+      <div class="tablewrap">
+        <table>
+          <thead id="list-head"></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+<div class="tooltip" id="tip" hidden></div>
+
+<script id="sweep-data" type="application/json">__DATA_JSON__</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById("sweep-data").textContent);
+  const B = D.box, R = D.range, T = D.trials, G = D.grid, P = D.points || [];
+  const NS = "http://www.w3.org/2000/svg";
+  const cm = v => Math.round(v * 100);
+  const sgn = v => (v > 0 ? "+" : "") + v;
+  const pct = (k, n) => n ? Math.round(100 * k / n) + "%" : "–";
+  const el = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const OUT = { success: "success", moved_not_done: D.kind === "articulated" ? "turned partway" : "moved, not done",
+                reached_not_moved: "reached, not turned", not_reached: "not reached", fell: "fell" };
+  const outcomeText = t => OUT[t.outcome] || t.outcome;
+  const where = (dx, dy, inside) => inside ? "in" : dx < B.dx[0] ? "closer" : dx > B.dx[1] ? "farther" : (dy > 0 ? "left" : "right");
+  const WHERE = { in: "in range", closer: "closer", left: "left", right: "right", farther: "farther" };
+  const rank = { in: 0, closer: 1, left: 2, right: 3, farther: 4 };
+  // a grid sweep sorts trials by their grid point (the planned pose; placement is within 1 cm of it)
+  T.forEach(t => { t.where = G ? where(t.gx, t.gy, t.inside) : where(t.dx, t.dy, t.inside); });
+  P.forEach(p => { p.where = where(p.dx, p.dy, p.inside); p.ts = p.trials.map(i => T[i]); });
+  const pointOf = {};
+  P.forEach((p, i) => p.trials.forEach(ti => { pointOf[ti] = i; }));
+
+  // ---------- header + stats
+  const sum = ts => ({ n: ts.length, k: ts.filter(t => t.success).length });
+  const running = D.done < D.planned;
+  const eta = h => h >= 1.5 ? `~${Math.round(h)} h left` : `~${Math.max(1, Math.round(h * 60))} min left`;
+  document.getElementById("eyebrow").textContent = [
+    D.task, `ckpt ${D.ckpt_step}`,
+    running ? `${D.done} / ${D.planned} trials` : `${T.length} trials`,
+    G ? `${P.length} points × ${G.repeats}, ${Math.round(G.step * 100)} cm apart` : null,
+    `updated ${D.updated}`, running && D.eta_h ? eta(D.eta_h) : null,
+  ].filter(Boolean).join(" · ");
+  document.getElementById("headline").textContent = D.title;
+  if (running) {
+    const pr = document.getElementById("progress");
+    pr.hidden = false;
+    pr.firstElementChild.style.width = (100 * D.done / D.planned).toFixed(1) + "%";
+  }
+  const stats = [
+    ["All", sum(T)],
+    ["In training range", sum(T.filter(t => t.where === "in"))],
+    ["Outside", sum(T.filter(t => t.where !== "in"))],
+    ["Closer", sum(T.filter(t => t.where === "closer"))],
+    ["Beside", sum(T.filter(t => t.where === "left" || t.where === "right"))],
+    ["Farther", sum(T.filter(t => t.where === "farther"))],
+  ].filter(s => s[1].n > 0 && (G || s[0] !== "All"));
+  document.getElementById("stats").innerHTML = stats.map(([label, s]) =>
+    `<div class="stat"><div class="label">${esc(label)}</div>` +
+    `<div class="value">${pct(s.k, s.n)}<small>${s.k}/${s.n}</small></div>` +
+    `<div class="bar" aria-hidden="true"><i style="width:${s.n ? 100 * s.k / s.n : 0}%"></i></div></div>`).join("");
+
+  // ---------- success-rate colours (grid): fail -> grey -> success, mixed in OKLab from the theme's tokens
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const hexRgb = h => { h = h.replace("#", ""); if (h.length === 3) h = [...h].map(c => c + c).join(""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); };
+  const lin = c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const gam = c => c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
+  const oklab = rgb => {
+    const [r, g, b] = rgb.map(lin);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+            0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
+  };
+  const rgbOf = ([L, a, b]) => {
+    const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3,
+          s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+    return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+            -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s].map(c => Math.min(1, Math.max(0, gam(c))));
+  };
+  const lum = rgb => { const [r, g, b] = rgb.map(lin); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  let pal;
+  const readPalette = () => { pal = { ok: oklab(hexRgb(css("--ok"))), fail: oklab(hexRgb(css("--fail"))), mid: oklab(hexRgb(css("--mid"))),
+                                      ink: hexRgb(css("--ink")), panel: hexRgb(css("--panel")) }; };
+  const rateColor = rate => {
+    const t = Math.abs(rate - 0.5) * 2, pole = rate >= 0.5 ? pal.ok : pal.fail;
+    const rgb = rgbOf(pal.mid.map((v, i) => v + t * (pole[i] - v)));
+    const text = contrast(rgb, pal.ink) >= contrast(rgb, pal.panel) ? "var(--ink)" : "var(--panel)";
+    return { fill: `rgb(${rgb.map(c => Math.round(c * 255)).join(",")})`, text };
+  };
+  readPalette();
+
+  // ---------- map: x = -dy (robot's left drawn on the left), y = -dx (ahead drawn up), units cm
+  const pad = 6;
+  const tbl = D.table;
+  const showRobot = R.dx[0] < 0.45;  // far targets (the oven, ~1 m): crop to the trial range, the robot is off the map
+  const x0 = -cm(R.dy[1]) - pad, x1 = -cm(R.dy[0]) + pad;
+  const yTop = -(Math.max(cm(R.dx[1]), tbl ? cm(tbl.edge) : 0) + 10);
+  const yBot = showRobot ? 12 : -(cm(R.dx[0]) - 10);
+  const svg = document.getElementById("map");
+  const ML = 8, MB = 7;  // room for tick labels
+  svg.setAttribute("viewBox", `${x0 - ML} ${yTop} ${x1 - x0 + ML} ${yBot - yTop + MB}`);
+  const X = dy => -dy * 100, Y = dx => -dx * 100;
+  const clip = el("clipPath", { id: "plotclip" }, el("defs", {}, svg));
+  el("rect", { x: x0, y: yTop, width: x1 - x0, height: yBot - yTop }, clip);
+  const plot = el("g", { "clip-path": "url(#plotclip)" }, svg);
+  el("rect", { x: x0, y: yTop, width: x1 - x0, height: yBot - yTop, fill: "var(--panel)" }, plot);
+  if (tbl) {
+    const a = tbl.yaw_deg * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+    const pts = [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([u, v]) => {
+      const lx = u * tbl.size[0] / 2, ly = v * tbl.size[1] / 2;
+      return X(tbl.center[1] + sa * lx + ca * ly) + "," + Y(tbl.center[0] + ca * lx - sa * ly);
+    }).join(" ");
+    el("polygon", { points: pts, fill: "var(--table)", stroke: "var(--table-edge)", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, plot);
+  }
+  const grid = el("g", {}, plot);
+  for (let v = Math.ceil(-x1 / 10) * 10; v <= -x0; v += 10)
+    el("line", { x1: -v, x2: -v, y1: yTop, y2: yBot, stroke: "var(--rule)", "stroke-width": 0.5, "vector-effect": "non-scaling-stroke" }, grid);
+  for (let v = Math.ceil(-yBot / 10) * 10; v <= -yTop; v += 10)
+    el("line", { x1: x0, x2: x1, y1: -v, y2: -v, stroke: "var(--rule)", "stroke-width": 0.5, "vector-effect": "non-scaling-stroke" }, grid);
+  const boxAttrs = b => ({ x: X(b.dy[1]), y: Y(b.dx[1]), width: (b.dy[1] - b.dy[0]) * 100, height: (b.dx[1] - b.dx[0]) * 100 });
+  if (!G) el("rect", { ...boxAttrs(B), fill: "var(--train-fill)", "fill-opacity": 0.7, stroke: "var(--train)", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, plot);
+  el("rect", { ...boxAttrs(R), fill: "none", stroke: "var(--ink-2)", "stroke-width": 1, "stroke-dasharray": "5 4", "vector-effect": "non-scaling-stroke" }, plot);
+
+  // grid cells, one per grid point: success rate of its finished trials; dashed = none finished yet
+  const cellLayer = el("g", {}, plot);
+  const labelLayer = el("g", { "pointer-events": "none" });  // added over the training-range outline, below
+  const h = G ? G.step * 50 : 0;
+  const paintCells = () => P.forEach(p => {
+    if (!p.n) return;
+    const c = rateColor(p.k / p.n);
+    p.fillNode.setAttribute("fill", c.fill);
+    p.textNode.setAttribute("fill", c.text);
+    p.textNode.style.stroke = c.fill;
+  });
+  P.forEach((p, i) => {
+    const cx = X(p.dy), cy = Y(p.dx);
+    const g = el("g", { class: "cell", tabindex: 0, role: "button",
+      "aria-label": `${cm(p.dx)} cm ahead, ${sgn(cm(p.dy))} cm left: ${p.n ? `${p.k} of ${p.n} succeeded` : "no trial yet"}` }, cellLayer);
+    g.dataset.p = i;
+    if (p.n) {
+      p.fillNode = el("rect", { x: cx - h, y: cy - h, width: 2 * h, height: 2 * h, stroke: "var(--panel)", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, g);
+      p.textNode = el("text", { x: cx, y: cy, class: "cell-label halo" }, labelLayer);
+      p.textNode.textContent = `${p.k}/${p.n}`;
+    } else {
+      el("rect", { x: cx - h + 0.35, y: cy - h + 0.35, width: 2 * h - 0.7, height: 2 * h - 0.7, fill: "var(--panel)", "fill-opacity": 0.6,
+                   stroke: "var(--muted)", "stroke-width": 1, "stroke-dasharray": "2 2", "vector-effect": "non-scaling-stroke" }, g);
+    }
+    el("rect", { x: cx - h + 0.25, y: cy - h + 0.25, width: 2 * h - 0.5, height: 2 * h - 0.5, class: "ring" }, g);
+    p.node = g;
+  });
+  paintCells();
+  if (G) {  // the training range on top of the cells (its edges cross them), the cells' counts on top of it
+    el("rect", { ...boxAttrs(B), fill: "none", stroke: "var(--ink)", "stroke-width": 2, "vector-effect": "non-scaling-stroke", "pointer-events": "none" }, plot);
+    plot.appendChild(labelLayer);
+  }
+  const demoLayer = el("g", { "pointer-events": "none" }, plot);
+  D.train.forEach(([dx, dy]) => el("circle", { cx: X(dy), cy: Y(dx), r: 0.45, fill: "var(--demo)", stroke: G ? "var(--panel)" : "none", "stroke-width": 0.8, "vector-effect": "non-scaling-stroke" }, demoLayer));
+  if (showRobot) {  // robot, top-down, to scale: G1 shoulders ~32 cm wide, at its spawn point, facing up
+    const robot = el("g", {}, plot);
+    el("ellipse", { cx: 0, cy: 4.8, rx: 16, ry: 6.5, fill: "var(--ink-2)", "fill-opacity": 0.18, stroke: "var(--ink-2)", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, robot);
+    el("circle", { cx: 0, cy: 4.8, r: 4.5, fill: "var(--ink-2)" }, robot);
+    el("path", { d: "M0,0 L0,-10", stroke: "var(--ink)", "stroke-width": 2, "vector-effect": "non-scaling-stroke" }, robot);
+    el("path", { d: "M-1.8,-8 L0,-11.5 L1.8,-8 Z", fill: "var(--ink)" }, robot);
+  } else {
+    const rl = el("text", { x: 0, y: yBot - 1.2, class: "axis-label halo", "text-anchor": "middle" }, plot);
+    rl.textContent = "↓ robot at 0";
+  }
+  if (tbl && -cm(tbl.edge) > yTop && -cm(tbl.edge) < yBot - 2) {
+    const tl = el("text", { x: x0 + 0.8, y: Y(tbl.edge) - 0.8, class: "axis-label halo" }, plot); tl.textContent = "table";
+  }
+  const reachLayer = el("g", { visibility: "hidden", "pointer-events": "none" }, plot);
+  const reachLine = (t, ox, oy) => {
+    if (!t.hand) return;
+    el("line", { x1: ox, y1: oy, x2: X(t.hand[1]), y2: Y(t.hand[0]), class: "reach" }, reachLayer);
+    el("circle", { cx: X(t.hand[1]), cy: Y(t.hand[0]), r: G ? 0.8 : 0.6, fill: t.success ? "var(--ok)" : "var(--fail)", stroke: "var(--panel)", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, reachLayer);
+  };
+  if (!G) T.forEach(t => reachLine(t, X(t.dy), Y(t.dx)));
+  const trialLayer = el("g", {}, plot);
+  if (!G) T.forEach((t, i) => {
+    const g = el("g", { class: "trial", tabindex: 0, role: "button",
+      "aria-label": `${t.label}: ${t.success ? "success" : "failure"}, ${cm(t.dx)} cm ahead, ${sgn(cm(t.dy))} cm left` }, trialLayer);
+    g.dataset.i = i;
+    el("circle", { cx: X(t.dy), cy: Y(t.dx), r: 3.2, class: "hit" }, g);
+    el("circle", { cx: X(t.dy), cy: Y(t.dx), r: 2.6, class: "ring" }, g);
+    if (t.success) el("circle", { cx: X(t.dy), cy: Y(t.dx), r: 1.7, class: "ok-dot" }, g);
+    else {
+      const d = `M${X(t.dy) - 1.3},${Y(t.dx) - 1.3} L${X(t.dy) + 1.3},${Y(t.dx) + 1.3} M${X(t.dy) + 1.3},${Y(t.dx) - 1.3} L${X(t.dy) - 1.3},${Y(t.dx) + 1.3}`;
+      el("path", { d, class: "fail-x-bg" }, g);
+      el("path", { d, class: "fail-x" }, g);
+    }
+    t.node = g;
+  });
+  for (let v = Math.ceil(-yBot / 10) * 10; v <= -yTop; v += 10) {
+    const tx = el("text", { x: x0 - 1.2, y: -v + 0.7, class: "tick", "text-anchor": "end" }, svg); tx.textContent = v;
+  }
+  for (let v = Math.ceil(-x1 / 10) * 10; v <= -x0; v += 10) {
+    const tx = el("text", { x: -v, y: yBot + 2.6, class: "tick", "text-anchor": "middle" }, svg);
+    tx.textContent = v === 0 ? "0" : (v > 0 ? v + " L" : -v + " R");
+  }
+  const ax = el("text", { x: (x0 + x1) / 2, y: yBot + 5.4, class: "axis-label", "text-anchor": "middle" }, svg);
+  ax.textContent = "cm left / right";
+  const ay = el("text", { x: x0 - 6.4, y: (yTop + yBot) / 2, class: "axis-label", "text-anchor": "middle", transform: `rotate(-90 ${x0 - 6.4} ${(yTop + yBot) / 2})` }, svg);
+  ay.textContent = "cm ahead";
+
+  // map text in screen pixels: SVG font sizes are in map units (cm), so rescale them with the map's drawn width
+  const vbW = x1 - x0 + ML, textStyle = document.createElement("style");
+  document.head.appendChild(textStyle);
+  const sizeText = () => {
+    const k = Math.max(0.1, svg.getBoundingClientRect().width / vbW);
+    const px = v => (v / k).toFixed(3) + "px";
+    textStyle.textContent = `#map .tick{font-size:${px(11)}} #map .axis-label{font-size:${px(12)}} #map .halo{stroke-width:${px(3.5)}}` +
+      `#map .cell-label{font-size:${px(Math.min(11, 2 * h * k * 0.3))}${2 * h * k < 26 ? ";display:none" : ""}}`;
+  };
+  sizeText();
+  if (window.ResizeObserver) new ResizeObserver(sizeText).observe(svg); else window.addEventListener("resize", sizeText);
+  const recolor = () => { readPalette(); paintCells(); drawLegend(); };
+  if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", recolor);
+  new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  const drawLegend = () => {
+    const trainSw = G ? `<rect x="-4.5" y="-3.5" width="9" height="7" fill="none" stroke="var(--ink)" stroke-width="1.6"/>`
+                      : `<rect x="-4.5" y="-3.5" width="9" height="7" fill="var(--train-fill)" stroke="var(--train)" stroke-width="1.6"/>`;
+    document.getElementById("legend").innerHTML = (G
+      ? `<span>success 0%<span class="ramp" aria-hidden="true">${[0, 0.2, 0.4, 0.6, 0.8, 1].map(r => `<i style="background:${rateColor(r).fill}"></i>`).join("")}</span>100%</span>` +
+        `<span><svg viewBox="-5 -5 10 10"><rect x="-4" y="-4" width="8" height="8" fill="none" stroke="var(--muted)" stroke-dasharray="1.6 1.6"/></svg>not run yet</span>`
+      : `<span><svg viewBox="-5 -5 10 10"><circle r="3.4" fill="var(--ok)"/></svg>success</span>` +
+        `<span><svg viewBox="-5 -5 10 10"><path d="M-3,-3 L3,3 M3,-3 L-3,3" stroke="var(--fail)" stroke-width="2.4" stroke-linecap="round"/></svg>failure</span>`) +
+      `<span><svg viewBox="-5 -5 10 10">${trainSw}</svg>training range</span>` +
+      `<span><svg viewBox="-5 -5 10 10"><rect x="-4.5" y="-3.5" width="9" height="7" fill="none" stroke="var(--ink-2)" stroke-dasharray="2 1.5"/></svg>trial range</span>`;
+  };
+  drawLegend();
+
+  const toggle = (id, layer, on) => {
+    const b = document.getElementById(id);
+    const set = v => { b.setAttribute("aria-pressed", v); layer.setAttribute("visibility", v ? "visible" : "hidden"); };
+    set(on);
+    b.addEventListener("click", () => set(b.getAttribute("aria-pressed") !== "true"));
+  };
+  toggle("t-demos", demoLayer, !G);  // over a filled grid the demo dots are clutter until asked for
+  toggle("t-reach", reachLayer, false);
+
+  // ---------- tooltip
+  const tip = document.getElementById("tip");
+  const showTip = (e, html) => {
+    tip.innerHTML = html; tip.hidden = false;
+    tip.style.left = Math.min(window.innerWidth - tip.offsetWidth - 8, e.clientX + 14) + "px";
+    tip.style.top = Math.max(8, e.clientY - tip.offsetHeight - 10) + "px";
+  };
+  [trialLayer, cellLayer].forEach(layer => {
+    layer.addEventListener("pointermove", e => {
+      const g = e.target.closest(".trial, .cell"); if (!g) { tip.hidden = true; return; }
+      if (g.dataset.p !== undefined) {
+        const p = P[g.dataset.p];
+        showTip(e, `<b>${cm(p.dx)} cm ahead, ${sgn(cm(p.dy))} cm left</b><br>` +
+          (p.n ? `${p.k}/${p.n} succeeded` : "not run yet") + ` · ${WHERE[p.where]}`);
+      } else {
+        const t = T[g.dataset.i];
+        showTip(e, `<b>${esc(t.label)}</b> · ${esc(outcomeText(t))}<br>${cm(t.dx)} cm ahead, ${sgn(cm(t.dy))} cm left`);
+      }
+    });
+    layer.addEventListener("pointerleave", () => { tip.hidden = true; });
+    layer.addEventListener("click", e => {
+      const g = e.target.closest(".trial, .cell"); if (!g) return;
+      g.dataset.p !== undefined ? selectPoint(+g.dataset.p) : select(+g.dataset.i);
+    });
+    layer.addEventListener("keydown", e => {
+      const g = e.target.closest(".trial, .cell");
+      if (!g || (e.key !== "Enter" && e.key !== " ")) return;
+      e.preventDefault();
+      g.dataset.p !== undefined ? selectPoint(+g.dataset.p) : select(+g.dataset.i);
+    });
+  });
+
+  // ---------- list: trials, or grid points
+  const tbody = document.getElementById("rows");
+  let order;
+  if (G) {
+    document.getElementById("list-title").textContent = "Grid points";
+    document.getElementById("list-head").innerHTML = `<tr><th class="r">Ahead cm</th><th class="r">Left cm</th><th>Range</th><th>Success</th></tr>`;
+    order = P.map((p, i) => i).sort((a, b) => rank[P[a].where] - rank[P[b].where] || P[a].dx - P[b].dx || P[b].dy - P[a].dy);
+    tbody.innerHTML = order.map(i => {
+      const p = P[i];
+      return `<tr data-p="${i}" tabindex="0"><td class="r num">${cm(p.dx)}</td><td class="r num">${sgn(cm(p.dy))}</td>` +
+        `<td>${WHERE[p.where]}</td><td class="num">${p.n ? `${p.k}/${p.n}<span class="minibar" aria-hidden="true"><i style="width:${100 * p.k / p.n}%"></i></span>` : "–"}</td></tr>`;
+    }).join("");
+  } else {
+    document.getElementById("list-head").innerHTML = `<tr><th>Trial</th><th class="r">Ahead cm</th><th class="r">Left cm</th><th>Range</th><th>Result</th></tr>`;
+    order = T.map((t, i) => i).sort((a, b) => rank[T[a].where] - rank[T[b].where] || T[a].trial - T[b].trial);
+    tbody.innerHTML = order.map(i => {
+      const t = T[i];
+      return `<tr data-i="${i}" tabindex="0"><td class="num">${esc(t.label)}</td><td class="r num">${cm(t.dx)}</td>` +
+        `<td class="r num">${sgn(cm(t.dy))}</td><td>${WHERE[t.where]}</td>` +
+        `<td><span class="chip ${t.success ? "ok" : "fail"}">${esc(outcomeText(t))}</span></td></tr>`;
+    }).join("");
+  }
+  const pickRow = tr => { if (!tr) return; tr.dataset.p !== undefined ? selectPoint(+tr.dataset.p) : select(+tr.dataset.i); };
+  tbody.addEventListener("click", e => pickRow(e.target.closest("tr")));
+  tbody.addEventListener("keydown", e => { if (e.key === "Enter") pickRow(e.target.closest("tr")); });
+
+  // ---------- hand vs target: where a hand was when nearest the target; on the diagonal it went to the target
+  const track = document.getElementById("track");
+  if (T.length > 60) track.classList.add("dense");
+  const fit = (xs, ys) => {
+    const n = xs.length; if (n < 3) return null;
+    const mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+    let sxy = 0, sxx = 0; for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; }
+    return sxx > 1e-9 ? sxy / sxx : null;
+  };
+  const trackMarks = [];
+  const mk = T.length > 60 ? 0.55 : 1;  // smaller marks when there are many
+  [["dy", 1, "Left / right", "target, cm left"], ["dx", 0, "Ahead", "target, cm ahead"]].forEach(([key, hi, title, xl]) => {
+    const pts = T.filter(t => t.hand).map(t => ({ t, x: t[key], y: t.hand[hi] }));
+    if (!pts.length) return;
+    const lo = Math.min(R[key][0], ...pts.map(p => p.y)) - 0.03, up = Math.max(R[key][1], ...pts.map(p => p.y)) + 0.03;
+    const S = 100 / (up - lo);
+    const box = document.createElement("div");
+    const slope = fit(pts.map(p => p.x), pts.map(p => p.y));
+    box.innerHTML = `<div class="t">${title} <span class="num" style="color:var(--muted)">slope ${slope === null ? "–" : slope.toFixed(2)}</span></div>`;
+    const s = el("svg", { viewBox: "-16 -4 122 122", role: "img", "aria-label": `${title}: hand position against target position` });
+    const px = v => (v - lo) * S, py = v => 100 - (v - lo) * S;
+    el("rect", { x: 0, y: 0, width: 100, height: 100, fill: "var(--panel)", stroke: "var(--rule)", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, s);
+    el("rect", { x: px(B[key][0]), y: 0, width: (B[key][1] - B[key][0]) * S, height: 100, fill: "var(--train-fill)" }, s);
+    el("line", { x1: 0, y1: 100, x2: 100, y2: 0, stroke: "var(--muted)", "stroke-dasharray": "4 3", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, s);
+    const tickStep = (up - lo) > 0.4 ? 0.2 : 0.1;
+    for (let v = Math.ceil(lo / tickStep) * tickStep; v <= up + 1e-9; v += tickStep) {
+      const a = el("text", { x: px(v), y: 106, "text-anchor": "middle", fill: "var(--muted)", "font-size": 4 }, s); a.textContent = Math.round(v * 100);
+      const b = el("text", { x: -2, y: py(v) + 1.4, "text-anchor": "end", fill: "var(--muted)", "font-size": 4 }, s); b.textContent = Math.round(v * 100);
+    }
+    const xlab = el("text", { x: 50, y: 115, "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 4.4 }, s); xlab.textContent = xl;
+    const ylab = el("text", { x: -12, y: 50, "text-anchor": "middle", fill: "var(--ink-2)", "font-size": 4.4, transform: "rotate(-90 -12 50)" }, s); ylab.textContent = "hand, cm";
+    pts.forEach(p => {
+      const g = el("g", { class: "trial" }, s); g.dataset.i = T.indexOf(p.t);
+      el("circle", { cx: px(p.x), cy: py(p.y), r: 3.6 * mk, class: "ring" }, g);
+      if (p.t.success) el("circle", { cx: px(p.x), cy: py(p.y), r: 2.2 * mk, class: "ok-dot" }, g);
+      else { const q = 1.7 * mk, d = `M${px(p.x) - q},${py(p.y) - q} L${px(p.x) + q},${py(p.y) + q} M${px(p.x) + q},${py(p.y) - q} L${px(p.x) - q},${py(p.y) + q}`;
+             el("path", { d, class: "fail-x-bg" }, g); el("path", { d, class: "fail-x" }, g); }
+      trackMarks.push(g);
+    });
+    s.addEventListener("click", e => { const g = e.target.closest(".trial"); if (g) select(+g.dataset.i); });
+    box.appendChild(s);
+    track.appendChild(box);
+  });
+
+  // ---------- selection: a trial (random sweeps), or a grid point and one of its trials
+  let cur = -1, curP = -1;
+  const showTrial = t => {
+    document.getElementById("insp-video").innerHTML = t && t.video
+      ? `<video src="${esc(t.video)}" controls muted playsinline autoplay preload="metadata"></video>`
+      : `<div class="novid">${t ? "no video" : "not run yet"}</div>`;
+    document.getElementById("insp-kv").innerHTML = !t ? "" : [
+      ["Trial", `${t.label}${t.scene !== null && t.scene !== undefined ? `, scene ${t.scene}` : ""}`],
+      ["Result", outcomeText(t)],
+      ["Target", `${cm(t.dx)} cm ahead, ${sgn(cm(t.dy))} cm left, yaw ${sgn(Math.round(t.dyaw))}°`],
+      ["Steps", `${t.steps} (${(t.steps / 50).toFixed(1)} s)`],
+    ].map(([k, v]) => `<dt>${esc(k)}</dt><dd class="num">${esc(v)}</dd>`).join("");
+    trackMarks.forEach(g => g.classList.toggle("sel", t !== undefined && T[+g.dataset.i] === t));
+  };
+  function select(i) {
+    if (G && pointOf[i] !== undefined) { selectPoint(pointOf[i], i); return; }
+    cur = i;
+    const t = T[i];
+    T.forEach(u => u.node && u.node.classList.toggle("sel", u === t));
+    tbody.querySelectorAll("tr").forEach(tr => tr.classList.toggle("sel", +tr.dataset.i === i));
+    document.getElementById("insp-title").innerHTML = `${esc(t.label)} <span class="chip ${t.success ? "ok" : "fail"}">${esc(outcomeText(t))}</span>`;
+    showTrial(t);
+  }
+  function selectPoint(pi, ti) {
+    curP = pi;
+    const p = P[pi];
+    P.forEach((q, j) => q.node.classList.toggle("sel", j === pi));
+    tbody.querySelectorAll("tr").forEach(tr => tr.classList.toggle("sel", +tr.dataset.p === pi));
+    const cls = !p.n ? "none" : p.k / p.n >= 0.5 ? "ok" : "fail";
+    document.getElementById("insp-title").innerHTML =
+      `${cm(p.dx)} cm ahead, ${sgn(cm(p.dy))} cm left <span class="chip ${cls}">${p.n ? `${p.k}/${p.n}` : "not run yet"}</span>`;
+    const runs = document.getElementById("insp-runs");
+    runs.hidden = false;
+    runs.innerHTML = p.ts.map(t => `<button class="${t.success ? "ok" : "fail"}" data-i="${T.indexOf(t)}" aria-pressed="false" ` +
+        `title="${esc(outcomeText(t))}">${t.success ? "✓" : "✗"} ${esc(t.label)}</button>`).join("") +
+      Array.from({ length: Math.max(0, G.repeats - p.n) }, () => `<span class="pending">pending</span>`).join("");
+    reachLayer.replaceChildren();
+    p.ts.forEach(t => reachLine(t, X(p.dy), Y(p.dx)));
+    const first = ti !== undefined ? ti : p.trials[0];
+    pickRun(first);
+  }
+  function pickRun(i) {
+    document.querySelectorAll("#insp-runs button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.i === i));
+    cur = i;
+    showTrial(i === undefined ? undefined : T[i]);
+  }
+  document.getElementById("insp-runs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) pickRun(+b.dataset.i); });
+  const stepTo = d => {
+    if (G) { const pos = order.indexOf(curP); selectPoint(order[(pos + d + order.length) % order.length]); }
+    else { const pos = order.indexOf(cur); select(order[(pos + d + order.length) % order.length]); }
+  };
+  document.getElementById("prev").addEventListener("click", () => stepTo(-1));
+  document.getElementById("next").addEventListener("click", () => stepTo(1));
+  if (G) {  // start on a finished point inside the training range, else any finished one
+    const first = order.find(i => P[i].n && P[i].where === "in") ?? order.find(i => P[i].n) ?? order[0];
+    selectPoint(first);
+  } else select(order[0]);
+
+  document.getElementById("foot").textContent = D.checkpoint;
+})();
+</script>
